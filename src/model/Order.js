@@ -1,0 +1,85 @@
+const mongoose = require("mongoose");
+const OrderStatus = require("../domain/OrderStatus");
+const PaymentStatus = require("../domain/PaymentStatus");
+
+const orderSchema = new mongoose.Schema({
+
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Seller",
+    required: true
+  },
+
+  orderItems: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "OrderItem"
+  }],
+
+  // ✅ ADDRESS SNAPSHOT (NOT ObjectId)
+  shippingAddress: {
+    name: { type: String, required: true },
+    mobile: { type: String, required: true },
+    address: { type: String, required: true },
+    locality: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pinCode: { type: String, required: true },
+  },
+
+  totalMrpPrice: {
+    type: Number,
+    required: true
+  },
+
+  totalSellingPrice: {
+    type: Number,
+    required: true
+  },
+
+  discount: Number,
+
+  totalItem: {
+    type: Number,
+    required: true
+  },
+
+  orderStatus: {
+    type: String,
+    enum: Object.values(OrderStatus),
+    default: OrderStatus.PENDING
+  },
+
+  paymentStatus: {
+    type: String,
+    enum: Object.values(PaymentStatus),
+    default: PaymentStatus.PENDING
+  },
+
+  orderDate: {
+    type: Date,
+    default: Date.now
+  },
+
+  deliveryDate: {
+    type: Date,
+    default: () => Date.now() + 7 * 24 * 60 * 60 * 1000
+  },
+  couponCode: {
+    type: String,
+  },
+
+  couponDiscount: {
+    type: Number,
+    default: 0,
+  },
+
+
+}, { timestamps: true });
+
+module.exports = mongoose.model("Order", orderSchema);

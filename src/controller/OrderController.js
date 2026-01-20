@@ -1,0 +1,217 @@
+const CartService = require("../service/CartService");
+const OrderService = require("../service/OrderService");
+const Order = require("../model/Order");
+const Address = require("../model/Address");
+const Notification = require("../model/Notification");
+
+class OrderController {
+
+  // =================================================
+  // ✅ CREATE ORDER
+  // =================================================
+  async createOrder(req, res) {
+    try {
+      const user = req.user;
+      const { addressId, paymentGateway } = req.body;
+
+      // ===============================
+      // 1️⃣ VALIDATE ADDRESS ID
+      // ===============================
+      if (!addressId) {
+        return res.status(400).json({
+          message: "Address is required",
+        });
+      }
+
+      // ===============================
+      // 2️⃣ FETCH ADDRESS (REAL DATA)
+      // ===============================
+      const address = await Address.findOne({
+        _id: addressId,
+        user: user._id,
+      });
+
+      if (!address) {
+        return res.status(404).json({
+          message: "Address not found",
+        });
+      }
+
+      // ===============================
+      // 3️⃣ FETCH USER CART
+      // ===============================
+      const cart = await CartService.findUserCart(user._id);
+
+      if (!cart || !cart.cartItems || cart.cartItems.length === 0) {
+        return res.status(400).json({
+          message: "Cart is empty",
+        });
+      }
+
+      // ===============================
+      // 4️⃣ ADDRESS SNAPSHOT
+      // ===============================
+      const shippingAddress = {
+        name: address.name,
+        mobile: address.mobile,
+        address: address.address,
+        locality: address.locality,
+        city: address.city,
+        state: address.state,
+        pinCode: address.pinCode, // ⚠️ spelling matches Address model
+      };
+
+      // ===============================
+      // 5️⃣ CREATE ORDER
+      // ===============================
+      const orders = await OrderService.createorder(
+        user,
+        shippingAddress,
+        cart,
+        paymentGateway || "COD"
+      );
+
+// 🔔 NOTIFICATION START (YAHAN DALO)
+for (const order of orders) {
+
+  // SELLER
+await Notification.create({
+  userId: order.seller,
+  role: "SELLER",
+  title: "New order received",
+  message: `New order ${order._id} placed by customer`,
+  link: `/seller/orders/${order._id}`,
+});
+
+
+
+  // ADMIN
+await Notification.create({
+  role: "ADMIN",
+  title: "New order placed",
+  message: `Order ${order._id} placed`,
+  link: `/admin/orders/${order._id}`,
+  type: "ORDER",
+});
+
+
+
+  // SOCKET EMIT
+  global.io.to(order.seller.toString()).emit("notification");
+  global.io.to("ADMIN").emit("notification");
+}
+// 🔔 NOTIFICATION END
+
+      return res.status(201).json({
+        message: "Order created successfully",
+        orders,
+      });
+
+    } catch (error) {
+      console.error("❌ ORDER ERROR 👉", error);
+      return res.status(500).json({
+        message: "Order creation failed",
+        error: error.message,
+      });
+    }
+  }
+
+  // =================================================
+  // ✅ GET ORDER BY ID
+  // =================================================
+  async getOrderById(req, res) {
+    try {
+      const { orderId } = req.params;
+      const order = await OrderService.findOrderById(orderId);
+      return res.status(200).json(order);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  // =================================================
+  // ✅ GET ORDER ITEM BY ID (SECURE)
+  // =================================================
+  async getOrderItemById(req, res) {
+    try {
+      const { orderItemId } = req.params;
+      const userId = req.user._id;
+
+      const orderItem = await OrderService.findOrderItemById(
+        orderItemId,
+        userId
+      );
+
+      return res.status(200).json(orderItem);
+    } catch (error) {
+      return res.status(401).json({ error: error.message });
+    }
+  }
+
+  // =================================================
+  // ✅ USER ORDER HISTORY
+  // =================================================
+  async getUserOrderHistory(req, res) {
+    try {
+      const user = req.user;
+      const orders = await OrderService.usersOrderHistory(user._id);
+      return res.status(200).json(orders);
+    } catch (error) {
+      console.error("ORDER HISTORY ERROR 👉", error);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  // =================================================
+  // ✅ SELLER ORDERS
+  // =================================================
+  async getSellersOrders(req, res) {
+    try {
+      const sellerId = req.seller._id;
+      const orders = await OrderService.getSellersOrders(sellerId);
+      return res.status(200).json(orders);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  // =================================================
+  // ✅ UPDATE ORDER STATUS
+  // =================================================
+  async updateOrderStatus(req, res) {
+    try {
+      const { orderId, orderStatus } = req.params;
+      const updatedOrder =
+        await OrderService.updateOrderStatus(orderId, orderStatus);
+
+      return res.status(200).json(updatedOrder);
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  cancelOrder = async (req, res) => {
+    try {
+      const { orderId } = req.params;
+
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.orderStatus === "DELIVERED") {
+        return res.status(400).json({ message: "Delivered order cannot be cancelled" });
+      }
+
+      order.orderStatus = "CANCELLED";
+      await order.save();
+
+      res.status(200).json(order);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+}
+
+module.exports = new OrderController();
