@@ -89,18 +89,24 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.BREVO_USER, // verified email
-    pass: process.env.BREVO_PASS, // smtp key
+    user: process.env.BREVO_USER,
+    pass: process.env.BREVO_PASS,
   },
 });
 
 async function sendVerificationEmail(to, subject, html) {
-  await transporter.sendMail({
-    from: `"Swastik" <${process.env.BREVO_USER}>`,
-    to,
-    subject,
-    html,
-  });
+  try {
+    await transporter.sendMail({
+      from: `"Swastik" <${process.env.BREVO_USER}>`,
+      to,
+      subject,
+      html,
+    });
+    console.log("✅ Email sent to:", to);
+  } catch (err) {
+    console.error("❌ Email failed:", err.message);
+    throw err;
+  }
 }
 
 module.exports = sendVerificationEmail;
