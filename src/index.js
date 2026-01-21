@@ -153,6 +153,7 @@ const sellerOrderRoutes = require("./routers/SellerOrderRoutes.js");
 
 const addressRoutes = require("./routers/AddressRoutes.js");
 const paymentRoutes = require("./routers/PaymentRoutes.js");
+const webhookRoutes = require("./routers/RazorpayWebhookRoutes.js");
 const transactionRoutes = require("./routers/TransactionRoutes.js");
 const sellerReportRoutes = require("./routers/SellerReportRoutes.js");
 
@@ -180,6 +181,7 @@ app.use("/api/sellers/orders", sellerOrderRoutes);
 
 app.use("/api/addresses", addressRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/payment", webhookRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/sellers/report", sellerReportRoutes);
 

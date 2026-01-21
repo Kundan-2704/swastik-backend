@@ -95,11 +95,7 @@ router.post(
    2️⃣ RAZORPAY WEBHOOK (🔥 SOURCE OF TRUTH)
    Razorpay → Backend (NO auth, NO json parser)
 ===================================================== */
-router.post(
-  "/razorpay/webhook",
-  express.raw({ type: "application/json" }), // ✅ ONLY HERE
-  PaymentController.razorpayWebhook
-);
+
 
 /* =====================================================
    3️⃣ SELLER DASHBOARD SUMMARY
