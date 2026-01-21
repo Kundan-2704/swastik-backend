@@ -62,12 +62,19 @@ const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendVerificationEmail(to, subject, body) {
-  await resend.emails.send({
-    from: "Swastik <onboarding@resend.dev>",
-    to,
-    subject,
-    html: body,
-  });
+  try {
+    await resend.emails.send({
+      from: "Swastik <onboarding@resend.dev>",
+      to,
+      subject,
+      html: body,
+    });
+
+    console.log("✅ Email sent to:", to);
+  } catch (error) {
+    console.error("❌ Email send failed:", error);
+    throw error;
+  }
 }
 
 module.exports = sendVerificationEmail;
