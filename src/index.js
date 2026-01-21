@@ -211,7 +211,7 @@ const port = process.env.PORT || 5000;
 // global.io = io;
 // SocketService.init(io);
 
-server.listen(port, async () => {
+app.listen(port, async () => {
   console.log(`🚀 Server running on port ${port}`);
   await connectDB();
 });
