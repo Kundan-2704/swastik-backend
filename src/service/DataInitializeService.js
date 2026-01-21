@@ -43,8 +43,8 @@ const User = require("../model/User");
 
 class DataInitializeService {
   async initializeAdminUser() {
-    const adminEmail = "primebeast348@gmail.com";
-    const adminPassword = "swastik123";
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.EMAIL_PASS;
 
     const existingAdmin = await User.findOne({
       email: adminEmail,
