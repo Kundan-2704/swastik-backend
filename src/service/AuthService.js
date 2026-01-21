@@ -145,30 +145,60 @@ class AuthService {
 
   /* ================= SEND LOGIN OTP ================= */
 
+  // async sendLoginOtp(email) {
+  //   const SIGNIN_PREFIX = "signin_";
+
+  //   const pureEmail = email.startsWith(SIGNIN_PREFIX)
+  //     ? email.replace(SIGNIN_PREFIX, "")
+  //     : email;
+
+  //   await VerificationCode.deleteOne({ email: pureEmail });
+
+  //   const otp = generateOTP();
+
+  //   await new VerificationCode({
+  //     email: pureEmail,
+  //     otp,
+  //   }).save();
+
+  //   await sendVerificationEmail(
+  //     pureEmail,
+  //     "Login OTP",
+  //     `<h2>Your OTP is ${otp}</h2>`
+  //   );
+
+  //   return { message: "OTP sent successfully" };
+  // }
+
   async sendLoginOtp(email) {
-    const SIGNIN_PREFIX = "signin_";
+  const SIGNIN_PREFIX = "signin_";
 
-    const pureEmail = email.startsWith(SIGNIN_PREFIX)
-      ? email.replace(SIGNIN_PREFIX, "")
-      : email;
+  const pureEmail = email.startsWith(SIGNIN_PREFIX)
+    ? email.replace(SIGNIN_PREFIX, "")
+    : email;
 
-    await VerificationCode.deleteOne({ email: pureEmail });
+  // old otp remove
+  await VerificationCode.deleteOne({ email: pureEmail });
 
-    const otp = generateOTP();
+  const otp = generateOTP();
 
-    await new VerificationCode({
-      email: pureEmail,
-      otp,
-    }).save();
+  // ✅ expiry add (production fix)
+  await VerificationCode.create({
+    email: pureEmail,
+    otp,
+    expiresAt: Date.now() + 5 * 60 * 1000, // 5 min
+  });
 
-    await sendVerificationEmail(
-      pureEmail,
-      "Login OTP",
-      `<h2>Your OTP is ${otp}</h2>`
-    );
+  // ✅ always send email (admin/customer same)
+  await sendVerificationEmail(
+    pureEmail,
+    "Login OTP",
+    `<h2>Your OTP is ${otp}</h2>`
+  );
 
-    return { message: "OTP sent successfully" };
-  }
+  return { message: "OTP sent successfully" };
+}
+
 
   /* ================= CREATE USER (SIGNUP) ================= */
 
