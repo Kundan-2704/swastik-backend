@@ -221,8 +221,12 @@ async razorpayWebhook(req, res) {
     console.log("🔥 WEBHOOK HIT");
 
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-    const signature = req.headers["x-razorpay-signature"];
+    if (!secret) {
+      console.error("❌ WEBHOOK SECRET NOT SET");
+      return res.status(500).json({ message: "Server misconfigured" });
+    }
 
+    const signature = req.headers["x-razorpay-signature"];
     const body = req.body.toString();
 
     const expectedSignature = crypto
@@ -238,39 +242,30 @@ async razorpayWebhook(req, res) {
     const event = JSON.parse(body);
     console.log("📦 Event received:", event.event);
 
-    // 🔥 PROCESS ONLY payment.captured
     if (event.event !== "payment.captured") {
       return res.json({ ok: true });
     }
 
     const payment = event.payload.payment.entity;
 
-    console.log("💰 Payment ID:", payment.id);
-    console.log("🧾 Razorpay Order ID:", payment.order_id);
-
-    const order = await Order.findOne({
-      razorpayOrderId: payment.order_id,
-    });
+    const order =
+      (await Order.findOne({ razorpayOrderId: payment.order_id })) ||
+      (await Order.findById(payment.notes?.receipt || payment.receipt));
 
     if (!order) {
-      console.log("⚠️ ORDER NOT FOUND for razorpayOrderId:", payment.order_id);
+      console.log("⚠️ ORDER NOT FOUND:", payment.order_id);
       return res.json({ ok: true });
     }
 
     if (order.paymentStatus === "PAID") {
-      console.log("ℹ️ Already processed, skipping");
       return res.json({ ok: true });
     }
 
-    // ✅ UPDATE ORDER
     order.paymentStatus = "PAID";
     order.orderStatus = "PLACED";
     order.razorpayPaymentId = payment.id;
     await order.save();
 
-    console.log("💾 Order updated in DB");
-
-    // 🔔 NOTIFICATIONS
     await Notification.create({
       user: order.user,
       title: "Payment successful",
@@ -285,7 +280,6 @@ async razorpayWebhook(req, res) {
       link: `/seller/orders/${order._id}`,
     });
 
-    // 🔔 SOCKETS
     global.io?.to(order.user.toString()).emit("notification");
     global.io?.to(order.seller.toString()).emit("notification");
 
@@ -300,6 +294,7 @@ async razorpayWebhook(req, res) {
     return res.status(500).json({ message: "Webhook error" });
   }
 }
+
 
 
 
