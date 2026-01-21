@@ -81,9 +81,13 @@ const router = express.Router();
    1️⃣ CREATE RAZORPAY ORDER
    Frontend checkout click → hit this
 ===================================================== */
+// router.post(
+//   "/razorpay/create-order",
+//   authMiddleware,
+//   PaymentController.createRazorpayOrder
+// );
 router.post(
   "/razorpay/create-order",
-  authMiddleware,
   PaymentController.createRazorpayOrder
 );
 
