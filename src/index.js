@@ -100,16 +100,16 @@ const app = express();
 
 /* ================= MIDDLEWARES ================= */
 
+const allowedRegex = /^https:\/\/swastik-frontend.*\.vercel\.app$/;
+
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
-      const allowed = [
-        "https://swastik-frontend-phi.vercel.app",
-        "http://localhost:5173",
-        "http://localhost:3000",
-      ];
-      if (allowed.includes(origin)) {
+      if (
+        allowedRegex.test(origin) ||
+        origin === "http://localhost:5173"
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -117,6 +117,8 @@ app.use(
     },
     credentials: true,
   })
+);
+
 );
 
 
