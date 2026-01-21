@@ -92,8 +92,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
 
-const http = require("http");
-const { Server: SocketIOServer } = require("socket.io");
+// const http = require("http");
+// const { Server: SocketIOServer } = require("socket.io");
 
 
 const app = express();
@@ -159,7 +159,7 @@ const sellerReportRoutes = require("./routers/SellerReportRoutes.js");
 const homeCategoryRoutes = require("./routers/HomeCategoryRoutes.js");
 const dealRoutes = require("./routers/DealRoutes.js");
 const couponRoutes = require("./routers/CouponRoutes");
-const SocketService = require("./service/SocketService.js");
+// const SocketService = require("./service/SocketService.js");
 
 const policyRoutes = require("./routers/policyRoutes.js");
 
@@ -196,20 +196,20 @@ app.use("/api", policyRoutes);
 
 const port = process.env.PORT || 5000;
 
-const server = http.createServer(app);
+// const server = http.createServer(app);
 
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: [
-      process.env.CLIENT_URL,
-      "http://localhost:5173"
-    ],
-    credentials: true,
-  },
-});
+// const io = new SocketIOServer(server, {
+//   cors: {
+//     origin: [
+//       process.env.CLIENT_URL,
+//       "http://localhost:5173"
+//     ],
+//     credentials: true,
+//   },
+// });
 
-global.io = io;
-SocketService.init(io);
+// global.io = io;
+// SocketService.init(io);
 
 server.listen(port, async () => {
   console.log(`🚀 Server running on port ${port}`);
