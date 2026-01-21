@@ -121,24 +121,114 @@ async createRazorpayOrder(req, res) {
   /* =================================================
      2️⃣ RAZORPAY WEBHOOK (SOURCE OF TRUTH)
   ================================================== */
- async razorpayWebhook(req, res) {
+//  async razorpayWebhook(req, res) {
+//   try {
+//     console.log("🔥 WEBHOOK HIT");
+
+//     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+//     const signature = req.headers["x-razorpay-signature"];
+
+//     console.log("👉 Signature header:", signature ? "PRESENT" : "MISSING");
+
+//     const body = req.body.toString();
+//     console.log("👉 Raw body received");
+
+//     const expectedSignature = crypto
+//       .createHmac("sha256", secret)
+//       .update(body)
+//       .digest("hex");
+
+//     console.log("👉 Signature match:", expectedSignature === signature);
+
+//     if (expectedSignature !== signature) {
+//       console.log("❌ INVALID SIGNATURE");
+//       return res.status(400).json({ message: "Invalid signature" });
+//     }
+
+//     const event = JSON.parse(body);
+//     console.log("📦 Event received:", event.event);
+
+//     if (event.event === "payment.captured") {
+//       const payment = event.payload.payment.entity;
+
+//       console.log("💰 Payment ID:", payment.id);
+//       console.log("🧾 Razorpay Order ID:", payment.order_id);
+
+//       const order = await Order.findOne({
+//         razorpayOrderId: payment.order_id,
+//       });
+
+//       if (!order) {
+//         console.log("⚠️ ORDER NOT FOUND for razorpayOrderId:", payment.order_id);
+//         return res.json({ ok: true });
+//       }
+
+//       console.log("✅ ORDER FOUND:", order._id.toString());
+//       console.log("👤 SELLER ID:", order.seller.toString());
+//       console.log("📌 Current payment status:", order.paymentStatus);
+
+//       if (order.paymentStatus === "PAID") {
+//         console.log("ℹ️ Already processed, skipping");
+//         return res.json({ ok: true });
+//       }
+
+//       order.paymentStatus = "PAID";
+//       order.orderStatus = "PLACED";
+//       order.razorpayPaymentId = payment.id;
+//       await order.save();
+
+//       console.log("💾 Order updated in DB");
+
+//       // 🔔 CUSTOMER NOTIFICATION
+// await Notification.create({
+//   user: order.user,
+//   title: "Payment successful",
+//   message: `Your payment for order ${order._id} was successful`,
+//   link: `/account/orders/${order._id}`,
+// });
+
+// // 🔔 SELLER NOTIFICATION
+// await Notification.create({
+//   user: order.seller,
+//   title: "New order received",
+//   message: `You received a new order ${order._id}`,
+//   link: `/seller/orders/${order._id}`,
+// });
+
+// // 🔔 SOCKET EMIT
+// global.io.to(order.user.toString()).emit("notification");
+// io.to(order.seller.toString()).emit("notification");
+
+
+//       await PaymentService.creditSellerWallet(order);
+//       console.log("💸 Seller wallet credited");
+
+//       await SellerReportService.updateAfterPayment(order);
+//       console.log("📊 Seller report updated");
+//     }
+
+//     console.log("✅ WEBHOOK COMPLETED SUCCESSFULLY");
+//     res.json({ ok: true });
+
+//   } catch (err) {
+//     console.error("❌ WEBHOOK ERROR:", err);
+//     res.status(500).json({ message: "Webhook error" });
+//   }
+// }
+
+async razorpayWebhook(req, res) {
   try {
     console.log("🔥 WEBHOOK HIT");
 
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers["x-razorpay-signature"];
 
-    console.log("👉 Signature header:", signature ? "PRESENT" : "MISSING");
-
     const body = req.body.toString();
-    console.log("👉 Raw body received");
 
     const expectedSignature = crypto
       .createHmac("sha256", secret)
       .update(body)
       .digest("hex");
-
-    console.log("👉 Signature match:", expectedSignature === signature);
 
     if (expectedSignature !== signature) {
       console.log("❌ INVALID SIGNATURE");
@@ -148,73 +238,69 @@ async createRazorpayOrder(req, res) {
     const event = JSON.parse(body);
     console.log("📦 Event received:", event.event);
 
-    if (event.event === "payment.captured") {
-      const payment = event.payload.payment.entity;
-
-      console.log("💰 Payment ID:", payment.id);
-      console.log("🧾 Razorpay Order ID:", payment.order_id);
-
-      const order = await Order.findOne({
-        razorpayOrderId: payment.order_id,
-      });
-
-      if (!order) {
-        console.log("⚠️ ORDER NOT FOUND for razorpayOrderId:", payment.order_id);
-        return res.json({ ok: true });
-      }
-
-      console.log("✅ ORDER FOUND:", order._id.toString());
-      console.log("👤 SELLER ID:", order.seller.toString());
-      console.log("📌 Current payment status:", order.paymentStatus);
-
-      if (order.paymentStatus === "PAID") {
-        console.log("ℹ️ Already processed, skipping");
-        return res.json({ ok: true });
-      }
-
-      order.paymentStatus = "PAID";
-      order.orderStatus = "PLACED";
-      order.razorpayPaymentId = payment.id;
-      await order.save();
-
-      console.log("💾 Order updated in DB");
-
-      // 🔔 CUSTOMER NOTIFICATION
-await Notification.create({
-  user: order.user,
-  title: "Payment successful",
-  message: `Your payment for order ${order._id} was successful`,
-  link: `/account/orders/${order._id}`,
-});
-
-// 🔔 SELLER NOTIFICATION
-await Notification.create({
-  user: order.seller,
-  title: "New order received",
-  message: `You received a new order ${order._id}`,
-  link: `/seller/orders/${order._id}`,
-});
-
-// 🔔 SOCKET EMIT
-global.io.to(order.user.toString()).emit("notification");
-io.to(order.seller.toString()).emit("notification");
-
-
-      await PaymentService.creditSellerWallet(order);
-      console.log("💸 Seller wallet credited");
-
-      await SellerReportService.updateAfterPayment(order);
-      console.log("📊 Seller report updated");
+    // 🔥 PROCESS ONLY payment.captured
+    if (event.event !== "payment.captured") {
+      return res.json({ ok: true });
     }
 
+    const payment = event.payload.payment.entity;
+
+    console.log("💰 Payment ID:", payment.id);
+    console.log("🧾 Razorpay Order ID:", payment.order_id);
+
+    const order = await Order.findOne({
+      razorpayOrderId: payment.order_id,
+    });
+
+    if (!order) {
+      console.log("⚠️ ORDER NOT FOUND for razorpayOrderId:", payment.order_id);
+      return res.json({ ok: true });
+    }
+
+    if (order.paymentStatus === "PAID") {
+      console.log("ℹ️ Already processed, skipping");
+      return res.json({ ok: true });
+    }
+
+    // ✅ UPDATE ORDER
+    order.paymentStatus = "PAID";
+    order.orderStatus = "PLACED";
+    order.razorpayPaymentId = payment.id;
+    await order.save();
+
+    console.log("💾 Order updated in DB");
+
+    // 🔔 NOTIFICATIONS
+    await Notification.create({
+      user: order.user,
+      title: "Payment successful",
+      message: `Your payment for order ${order._id} was successful`,
+      link: `/account/orders/${order._id}`,
+    });
+
+    await Notification.create({
+      user: order.seller,
+      title: "New order received",
+      message: `You received a new order ${order._id}`,
+      link: `/seller/orders/${order._id}`,
+    });
+
+    // 🔔 SOCKETS
+    global.io?.to(order.user.toString()).emit("notification");
+    global.io?.to(order.seller.toString()).emit("notification");
+
+    await PaymentService.creditSellerWallet(order);
+    await SellerReportService.updateAfterPayment(order);
+
     console.log("✅ WEBHOOK COMPLETED SUCCESSFULLY");
-    res.json({ ok: true });
+    return res.json({ ok: true });
 
   } catch (err) {
     console.error("❌ WEBHOOK ERROR:", err);
-    res.status(500).json({ message: "Webhook error" });
+    return res.status(500).json({ message: "Webhook error" });
   }
 }
+
 
 
   /* =================================================
