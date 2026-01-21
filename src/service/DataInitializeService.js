@@ -37,14 +37,18 @@
 // module.exports = new DataInitializeService();
 
 
-
 const bcrypt = require("bcrypt");
 const User = require("../model/User");
 
 class DataInitializeService {
   async initializeAdminUser() {
     const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.EMAIL_PASS;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPassword) {
+      console.log("⚠️ Admin env missing, skipping init");
+      return;
+    }
 
     const existingAdmin = await User.findOne({
       email: adminEmail,
