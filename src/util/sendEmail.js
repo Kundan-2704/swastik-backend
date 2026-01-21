@@ -102,11 +102,12 @@ async function sendVerificationEmail(to, subject, html) {
       subject,
       html,
     });
-    console.log("✅ Email sent to:", to);
+    console.log("✅ Email sent:", to);
   } catch (err) {
     console.error("❌ Email failed:", err.message);
-    throw err;
+    // ❗ DON'T throw
   }
 }
+
 
 module.exports = sendVerificationEmail;
