@@ -57,57 +57,24 @@
 
 
 
-// const { Resend } = require("resend");
+const { Resend } = require("resend");
 
-// const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// async function sendVerificationEmail(to, subject, body) {
-//   try {
-//     await resend.emails.send({
-//       from: "Swastik <onboarding@resend.dev>",
-//       to,
-//       subject,
-//       html: body,
-//     });
-
-//     console.log("✅ Email sent to:", to);
-//   } catch (error) {
-//     console.error("❌ Email send failed:", error);
-//     throw error;
-//   }
-// }
-
-// module.exports = sendVerificationEmail;
-
-
-
-
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_USER,
-    pass: process.env.BREVO_PASS,
-  },
-});
-
-async function sendVerificationEmail(to, subject, html) {
+async function sendVerificationEmail(to, subject, body) {
   try {
-    await transporter.sendMail({
-      from: `"Swastik" <${process.env.BREVO_USER}>`,
+    await resend.emails.send({
+      from: "Swastik <onboarding@resend.dev>",
       to,
       subject,
-      html,
+      html: body,
     });
-    console.log("✅ Email sent:", to);
-  } catch (err) {
-    console.error("❌ Email failed:", err.message);
-    // ❗ DON'T throw
+
+    console.log("✅ Email sent to:", to);
+  } catch (error) {
+    console.error("❌ Email send failed:", error);
+    throw error;
   }
 }
-
 
 module.exports = sendVerificationEmail;
