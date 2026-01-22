@@ -117,37 +117,81 @@ console.log("Order created:", orders.map(o => o._id));
     }
   }
 
-  // =================================================
-  // ✅ GET ORDER BY ID
-  // =================================================
-  async getOrderById(req, res) {
-    try {
-      const { orderId } = req.params;
-      const order = await OrderService.findOrderById(orderId);
-      return res.status(200).json(order);
-    } catch (error) {
-      return res.status(400).json({ error: error.message });
+  // async getOrderById(req, res) {
+  //   try {
+  //     const { orderId } = req.params;
+  //     const order = await OrderService.findOrderItemById(orderId);
+  //     return res.status(200).json(order);
+  //   } catch (error) {
+  //     return res.status(400).json({ error: error.message });
+  //   }
+  // }
+
+  // async getOrderItemById(req, res) {
+  //   try {
+  //     const { orderItemId } = req.params;
+  //     const userId = req.user._id;
+
+  //     const orderItem = await OrderService.findOrderItemById(
+  //       orderItemId,
+  //       userId
+  //     );
+
+  //     return res.status(200).json(orderItem);
+  //   } catch (error) {
+  //     return res.status(401).json({ error: error.message });
+  //   }
+  // }
+
+
+// =================================================
+// ✅ GET ORDER BY ID (ADMIN / SELLER / CUSTOMER SAFE)
+// =================================================
+async getOrderById(req, res) {
+  try {
+    const { orderId } = req.params;
+    const user = req.user;
+
+    let order;
+
+    // 🔥 ADMIN: can see any order
+    if (user.role === "ADMIN" || user.role === "ROLE_ADMIN") {
+      order = await OrderService.findOrderById(orderId);
     }
-  }
-
-  // =================================================
-  // ✅ GET ORDER ITEM BY ID (SECURE)
-  // =================================================
-  async getOrderItemById(req, res) {
-    try {
-      const { orderItemId } = req.params;
-      const userId = req.user._id;
-
-      const orderItem = await OrderService.findOrderItemById(
-        orderItemId,
-        userId
-      );
-
-      return res.status(200).json(orderItem);
-    } catch (error) {
-      return res.status(401).json({ error: error.message });
+    // 🔥 SELLER: only own order items
+    else if (user.role === "SELLER") {
+      order = await OrderService.findSellerOrderById(orderId, user._id);
     }
+    // 🔥 CUSTOMER: only own orders
+    else {
+      order = await OrderService.findUserOrderById(orderId, user._id);
+    }
+
+    return res.status(200).json(order);
+  } catch (error) {
+    return res.status(401).json({ error: error.message });
   }
+}
+
+// =================================================
+// ✅ GET ORDER ITEM BY ID (SECURE - OK ALREADY)
+// =================================================
+async getOrderItemById(req, res) {
+  try {
+    const { orderItemId } = req.params;
+    const userId = req.user._id;
+
+    const orderItem = await OrderService.findOrderItemById(
+      orderItemId,
+      userId
+    );
+
+    return res.status(200).json(orderItem);
+  } catch (error) {
+    return res.status(401).json({ error: error.message });
+  }
+}
+
 
   // =================================================
   // ✅ USER ORDER HISTORY

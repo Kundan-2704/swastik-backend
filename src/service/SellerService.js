@@ -266,14 +266,19 @@ class SellerService {
     return this.getSellerByEmail(email);
   }
 
-  async getSellerByEmail(email) {
-    const seller = await Seller.findOne({ email }).populate("pickupAddress");
+  // async getSellerByEmail(email) {
+  //   const seller = await Seller.findOne({ email }).populate("pickupAddress");
 
-    if (!seller) {
-      throw new Error("Seller not found");
-    }
-    return seller;
-  }
+  //   if (!seller) {
+  //     throw new Error("Seller not found");
+  //   }
+  //   return seller;
+  // }
+
+  async getSellerByEmail(email) {
+  return await Seller.findOne({ email }).populate("pickupAddress");
+}
+
 
   async getSellerById(id) {
     const seller = await Seller.findById(id).populate("pickupAddress");

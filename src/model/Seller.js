@@ -33,6 +33,24 @@ const sellerSchema = new mongoose.Schema(
       select: false, // 🔒 never return password
     },
 
+    /* 🔥 ADD BELOW EXISTING FIELDS */
+
+provider: {
+  type: String,
+  enum: ["email", "google"],
+  default: "email",
+},
+
+googleUid: {
+  type: String,
+},
+
+isVerified: {
+  type: Boolean,
+  default: false,
+},
+
+
     /* BUSINESS DETAILS */
     businessDetails: {
       businessName: String,
