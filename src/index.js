@@ -288,6 +288,11 @@ const paymentRoutes = require("./routers/PaymentRoutes.js");
 const transactionRoutes = require("./routers/TransactionRoutes.js");
 const sellerReportRoutes = require("./routers/SellerReportRoutes.js");
 
+const SellerPayoutRoutes = require("./routers/SellerPayoutRoutes.js");
+const AdminPayoutRoutes = require("./routers/AdminPayoutRoutes.js");
+
+const sellerWalletRoutes = require("./routers/SellerWalletRoutes.js");
+
 const homeCategoryRoutes = require("./routers/HomeCategoryRoutes.js");
 const dealRoutes = require("./routers/DealRoutes.js");
 const couponRoutes = require("./routers/CouponRoutes.js");
@@ -312,6 +317,11 @@ app.use("/api/addresses", addressRoutes);
 app.use("/api/payment", paymentRoutes); // ⚠️ normal routes AFTER parser
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/sellers/report", sellerReportRoutes);
+
+app.use("/api/sellers/payouts", SellerPayoutRoutes);
+app.use("/api/admin/payouts", AdminPayoutRoutes);
+
+app.use("/api/sellers/wallet", sellerWalletRoutes);
 
 app.use("/admin", adminRoutes);
 app.use("/admin/deals", dealRoutes);

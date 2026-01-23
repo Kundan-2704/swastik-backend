@@ -2,15 +2,46 @@ const mongoose = require("mongoose");
 
 const payoutSchema = new mongoose.Schema(
   {
-    seller: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    amount: Number,
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Seller",
+      required: true,
+    },
+
+    amount: {
+      type: Number,
+      required: true,
+    },
+
     status: {
       type: String,
-      enum: ["PENDING", "PAID", "FAILED"],
-      default: "PENDING",
+      enum: ["pending", "processing", "paid", "failed", "rejected"],
+      default: "pending",
     },
-    payoutDate: Date,
-    razorpayPayoutId: String,
+
+    method: {
+      type: String,
+      enum: ["bank", "upi"],
+      required: true,
+    },
+
+    bankDetails: {
+      accountHolder: String,
+      accountNumber: String,
+      ifsc: String,
+      bankName: String,
+    },
+
+    upiId: String,
+
+    remark: String,
+
+    processedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+    },
+
+    processedAt: Date,
   },
   { timestamps: true }
 );
