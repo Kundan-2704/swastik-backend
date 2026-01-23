@@ -3,6 +3,10 @@ const razorpay = require("../config/razorpayClient");
 const Order = require("../model/Order");
 const PaymentService = require("../service/PaymentService");
 const SellerReportService = require("../service/SellerReportService");
+
+const AdminPaymentService = require("../service/AdminPaymentService");
+
+
 const Notification = require("../model/Notification");
 
 class PaymentController {
@@ -265,6 +269,11 @@ async razorpayWebhook(req, res) {
     order.orderStatus = "PLACED";
     order.razorpayPaymentId = payment.id;
     await order.save();
+
+    /* ==============================
+   🔥 ADMIN PAYMENT CREATE
+============================== */
+await AdminPaymentService.createFromOrder(order, payment);
 
     await Notification.create({
       user: order.user,
