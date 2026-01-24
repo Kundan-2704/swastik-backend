@@ -350,6 +350,26 @@ class SellerController {
       return res.status(500).json({ message: error.message });
     }
   }
+
+  /* ================= GET SELLER BY ID (ADMIN) ================= */
+async getSellerById(req, res) {
+  try {
+    const seller = await Seller.findById(req.params.id)
+      .populate("pickupAddress")
+      .populate("businessDetails")
+      .populate("bankDetails");
+
+    if (!seller) {
+      return res.status(404).json({ message: "Seller not found" });
+    }
+
+    return res.status(200).json(seller);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+}
+
+
 }
 
 module.exports = new SellerController();

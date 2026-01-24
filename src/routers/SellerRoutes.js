@@ -42,12 +42,17 @@ router.post("/verify/login-otp", sellerController.verifyLoginOtp);
 router.get("/profile", sellerMiddleware, sellerController.getSellerProfile);
 router.post("/", sellerController.createSeller);
 router.get("/", sellerController.getAllSellers);
+
+// ✅ ADD THIS LINE (VERY IMPORTANT)
+router.get("/:id", sellerController.getSellerById);
+
 router.patch("/", sellerMiddleware, sellerController.updateSellers);
 // ================= ADMIN SELLER STATUS UPDATE =================
 router.patch(
   "/:id/status",
   sellerController.updateSellerAccountStatus
 );
+
 
 
 module.exports = router;
