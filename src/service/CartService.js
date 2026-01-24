@@ -103,6 +103,8 @@ const CartItem = require("../model/CartItem");
 const calculatedDiscountPercentage =
   require("../util/calculateDiscountPercenteg.js");
 
+  const FREE_SIZE = "FREE_SIZE";
+
 class CartService {
 
   async findUserCart(userOrUserId) {
@@ -198,13 +200,13 @@ class CartService {
   //   return isPresent;
   // }
 
-  async addCartItem(userId, product, size, quantity) {
+  async addCartItem(userId, product, size = "FREE_SIZE", quantity) {
   const cart = await this.findUserCart(userId);
 
   let cartItem = await CartItem.findOne({
     cart: cart._id,
     product: product._id,
-    size,
+    size: size || "FREE_SIZE",
   });
 
   if (cartItem) {

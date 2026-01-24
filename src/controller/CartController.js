@@ -86,6 +86,9 @@ const CartItemService = require("../service/CartItemService.js");
 const CartService = require("../service/CartService.js");
 const ProductService = require("../service/ProductService.js");
 
+const FREE_SIZE = "FREE_SIZE";
+
+
 class CartController {
 
   async findUserCartHandler(req, res) {
@@ -113,7 +116,7 @@ class CartController {
       const cartItem = await CartService.addCartItem(
         user._id,
         product,
-        req.body.size,
+        req.body.size || FREE_SIZE,
         req.body.quantity
       );
 

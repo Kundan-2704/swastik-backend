@@ -15,7 +15,7 @@ const cartItemsSchema = new Schema({
     },
     size: {
         type: String,
-        required: true
+         default: "FREE_SIZE",
     },
     quantity: {
         type: Number,
