@@ -1,22 +1,22 @@
-// controllers/notification.controller.js
-const notificationService = require("../services/notification.service");
+const notificationService = require("../service/notificationService");
 
 class NotificationController {
-  async getAll(req, res) {
-    const notifications = await notificationService.getNotificationsByUser(
-      req.user._id
-    );
-    res.json(notifications);
+  async getMyNotifications(req, res) {
+    try {
+      const data = await notificationService.getUserNotifications(req.user.id);
+      return res.status(200).json(data);
+    } catch (err) {
+      return res.status(500).json({ message: err.message });
+    }
   }
 
-  async readOne(req, res) {
-    const notification = await notificationService.markAsRead(req.params.id);
-    res.json(notification);
-  }
-
-  async readAll(req, res) {
-    await notificationService.markAllAsRead(req.user._id);
-    res.json({ success: true });
+  async markRead(req, res) {
+    try {
+      const data = await notificationService.markAsRead(req.params.id);
+      return res.status(200).json(data);
+    } catch (err) {
+      return res.status(500).json({ message: err.message });
+    }
   }
 }
 

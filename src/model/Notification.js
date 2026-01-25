@@ -1,4 +1,3 @@
-// models/notification.model.js
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema(
@@ -6,36 +5,38 @@ const notificationSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: "role",
+      ref: "User",
     },
-userId: {
-  type: mongoose.Schema.Types.ObjectId,
-  required: function () {
-    return this.role !== "ADMIN";
-  },
-  refPath: "role",
-},
-
     role: {
       type: String,
-      enum: ["ADMIN", "SELLER", "CUSTOMER"],
+      enum: ["admin", "seller", "customer"],
       required: true,
     },
-
-    title: { type: String, required: true },
-    message: { type: String, required: true },
-
-    type: {
-      type: String,
-      enum: ["ORDER", "PAYMENT", "PAYOUT", "PRODUCT", "REVIEW", "SYSTEM", "KYC"],
-      default: "SYSTEM",
+    title: String,
+    message: String,
+    type: String,
+    data: Object,
+    isRead: {
+      type: Boolean,
+      default: false,
     },
-
-    link: String,
-
-    isRead: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
+
+/* 🔥 FINAL SAFETY NET (MOST IMPORTANT) */
+notificationSchema.pre("validate", function (next) {
+  if (!this.role) return next();
+
+  // normalize anything → enum safe
+  const role = this.role.toString().toLowerCase();
+
+  if (role.includes("admin")) this.role = "admin";
+  else if (role.includes("seller")) this.role = "seller";
+  else if (role.includes("customer")) this.role = "customer";
+  else this.role = "customer";
+
+  next();
+});
 
 module.exports = mongoose.model("Notification", notificationSchema);

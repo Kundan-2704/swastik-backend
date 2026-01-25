@@ -4,6 +4,10 @@ const Order = require("../model/Order");
 const Address = require("../model/Address");
 // const Notification = require("../model/Notification");
 
+const createNotification = require("../util/createNotification");
+const UserRoles = require("../domain/userRole");
+const { SUCCESS } = require("../domain/PaymentStatus");
+
 class OrderController {
 
   // =================================================
@@ -71,40 +75,30 @@ class OrderController {
         paymentGateway || "COD"
       );
 
-// 🔕 notification disabled for now
-console.log("Order created:", orders.map(o => o._id));
-
-// for (const order of orders) {
-
-  
-// await Notification.create({
-//   userId: order.seller,
-//   role: "SELLER",
-//   title: "New order received",
-//   message: `New order ${order._id} placed by customer`,
-//   link: `/seller/orders/${order._id}`,
-// });
 
 
+const sellerIds = new Set(
+  cart.cartItems.map((i) => i.product.seller.toString())
+);
 
-
-// await Notification.create({
-//   role: "ADMIN",
-//   title: "New order placed",
-//   message: `Order ${order._id} placed`,
-//   link: `/admin/orders/${order._id}`,
-//   type: "ORDER",
-// });
+for (const sellerId of sellerIds) {
+  await createNotification({
+    userId: sellerId,
+    role: UserRoles.SELLER,
+    title: "New Order Received 🛒",
+    message: `Order #${orders._id} placed`,
+    type: "ORDER",
+    data: { orderId: orders._id },
+  });
+}
 
 
 
-//   global.io.to(order.seller.toString()).emit("notification");
-//   global.io.to("ADMIN").emit("notification");
-// }
-// 🔔 NOTIFICATION END
+
 
       return res.status(201).json({
         message: "Order created successfully",
+        SUCCESS:true,
         orders,
       });
 

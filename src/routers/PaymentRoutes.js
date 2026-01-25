@@ -75,6 +75,7 @@ const express = require("express");
 const authMiddleware = require("../middleware/authMiddleware");
 const PaymentController = require("../controller/PaymentController");
 
+
 const router = express.Router();
 
 /* =====================================================
@@ -86,8 +87,14 @@ const router = express.Router();
 //   authMiddleware,
 //   PaymentController.createRazorpayOrder
 // );
+// router.post(
+//   "/razorpay/create-order",
+//   PaymentController.createRazorpayOrder
+// );
+
 router.post(
   "/razorpay/create-order",
+  authMiddleware,
   PaymentController.createRazorpayOrder
 );
 
@@ -95,6 +102,14 @@ router.post(
    2️⃣ RAZORPAY WEBHOOK (🔥 SOURCE OF TRUTH)
    Razorpay → Backend (NO auth, NO json parser)
 ===================================================== */
+
+
+/* 🔥 ADD THIS */
+router.post(
+  "/razorpay/verify",
+  authMiddleware,
+  PaymentController.verifyPayment
+);
 
 
 /* =====================================================

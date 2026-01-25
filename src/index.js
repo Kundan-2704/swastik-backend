@@ -301,6 +301,8 @@ const dealRoutes = require("./routers/DealRoutes.js");
 const couponRoutes = require("./routers/CouponRoutes.js");
 const policyRoutes = require("./routers/policyRoutes.js");
 
+const notificationRoutes = require("./routers/NotificationRoutes.js");
+
 /* ================= MOUNTS ================= */
 
 app.use("/auth", authRoutes);
@@ -334,6 +336,8 @@ app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/home", homeCategoryRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api", policyRoutes);
+
+app.use("/notifications", notificationRoutes);
 
 /* ================= SERVER ================= */
 
