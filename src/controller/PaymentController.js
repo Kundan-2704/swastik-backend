@@ -8,6 +8,10 @@ const AdminPaymentService = require("../service/AdminPaymentService");
 
 const Cart = require("../model/Cart");
 
+const Address = require("../model/Address");
+const CartService = require("../service/CartService");
+
+const OrderService = require("../service/OrderService");
 
 
 const Notification = require("../model/Notification");
@@ -16,111 +20,37 @@ class PaymentController {
   /* =================================================
      1️⃣ CREATE RAZORPAY ORDER
   ================================================== */
-//   async createRazorpayOrder(req, res) {
-//     try {
-//       const { orderId } = req.body;
-
-//       if (!orderId) {
-//         return res.status(400).json({ message: "orderId required" });
-//       }
-
-//       const order = await Order.findById(orderId);
-//       if (!order) {
-//         return res.status(404).json({ message: "Order not found" });
-//       }
-
-//       // idempotency
-//       if (order.razorpayOrderId) {
-//         return res.json({
-//           razorpayOrderId: order.razorpayOrderId,
-//           amount: Math.round(order.totalSellingPrice * 100),
-//           currency: "INR",
-//         });
-//       }
-
-//       if (!process.env.RAZORPAY_KEY_ID) {
-//         throw new Error("Razorpay keys missing in env");
-//       }
-
-//       // const razorpayOrder = await razorpay.orders.create({
-//       //   amount: Math.round(order.totalSellingPrice * 100), // 🔥 FIX
-//       //   currency: "INR",
-//       //   receipt: order._id.toString(),
-//       // });
-
-//       const razorpayOrder = await razorpay.orders.create({
-//   amount:
-//     process.env.NODE_ENV === "development"
-//       ? 100   // 👈 ₹1 test
-//       : order.totalSellingPrice * 100,
-//   currency: "INR",
-//   receipt: order._id.toString(),
-//   payment_capture: 1,
-// });
 
 
-//       order.razorpayOrderId = razorpayOrder.id;
-//       await order.save();
-
-//       return res.json({
-//         razorpayOrderId: razorpayOrder.id,
-//         amount: razorpayOrder.amount,
-//         currency: razorpayOrder.currency,
-//       });
-//     } catch (err) {
-//       console.error("❌ RAZORPAY ORDER ERROR:", err);
-//       res.status(500).json({ message: "Payment init failed" });
-//     }
-//   }
 
 
 // async createRazorpayOrder(req, res) {
 //   try {
-//     const { orderId } = req.body;
-//     if (!orderId) {
-//       return res.status(400).json({ message: "orderId required" });
+//     const userId = req.user._id;
+
+//     const cart = await Cart.findOne({ user: userId });
+//     if (!cart || !cart.totalSellingPrice) {
+//       return res.status(400).json({ message: "Cart empty or not ready" });
 //     }
 
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ message: "Order not found" });
-//     }
-
-//     // 🔥 DEV MODE: always create new razorpay order
-//     if (process.env.NODE_ENV !== "development") {
-//       if (order.razorpayOrderId) {
-//         return res.json({
-//           razorpayOrderId: order.razorpayOrderId,
-//           amount: Math.round(order.totalSellingPrice * 100),
-//           currency: "INR",
-//         });
-//       }
-//     }
-
-//     const amount =
-//       process.env.NODE_ENV === "development"
-//         ? 100 // ₹1 test
-//         : Math.round(order.totalSellingPrice * 100);
+//     const amount = Math.round(cart.totalSellingPrice * 100);
 
 //     const razorpayOrder = await razorpay.orders.create({
 //       amount,
 //       currency: "INR",
-//       receipt: order._id.toString(),
+//       receipt: `rcpt_${Date.now()}`,
 //       payment_capture: 1,
 //     });
 
-//     // overwrite old id in dev
-//     order.razorpayOrderId = razorpayOrder.id;
-//     await order.save();
-
 //     return res.json({
 //       razorpayOrderId: razorpayOrder.id,
-//       amount: razorpayOrder.amount,
-//       currency: razorpayOrder.currency,
+//       amount,
+//       currency: "INR",
 //     });
+
 //   } catch (err) {
 //     console.error("❌ RAZORPAY ORDER ERROR:", err);
-//     res.status(500).json({ message: "Payment init failed" });
+//     return res.status(500).json({ message: "Payment init failed" });
 //   }
 // }
 
@@ -128,11 +58,10 @@ class PaymentController {
 
 async createRazorpayOrder(req, res) {
   try {
-    const userId = req.user._id;
+    const cart = await Cart.findOne({ user: req.user._id });
 
-    const cart = await Cart.findOne({ user: userId });
     if (!cart || !cart.totalSellingPrice) {
-      return res.status(400).json({ message: "Cart empty or not ready" });
+      return res.status(400).json({ message: "Cart empty" });
     }
 
     const amount = Math.round(cart.totalSellingPrice * 100);
@@ -141,20 +70,20 @@ async createRazorpayOrder(req, res) {
       amount,
       currency: "INR",
       receipt: `rcpt_${Date.now()}`,
-      payment_capture: 1,
     });
 
-    return res.json({
+    res.json({
       razorpayOrderId: razorpayOrder.id,
       amount,
       currency: "INR",
     });
 
-  } catch (err) {
-    console.error("❌ RAZORPAY ORDER ERROR:", err);
-    return res.status(500).json({ message: "Payment init failed" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Payment init failed" });
   }
 }
+
 
   /* =================================================
      2️⃣ RAZORPAY WEBHOOK (SOURCE OF TRUTH)
@@ -338,36 +267,138 @@ await AdminPaymentService.createFromOrder(order, payment);
   }
 }
 
+// async verifyPayment(req, res) {
+//   try {
+//     const {
+//       razorpay_payment_id,
+//       razorpay_order_id,
+//       razorpay_signature,
+//     } = req.body;
+
+//     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+//       return res.status(400).json({ message: "Invalid payment data" });
+//     }
+
+//     const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+//     const expectedSignature = crypto
+//       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+//       .update(body)
+//       .digest("hex");
+
+//     if (expectedSignature !== razorpay_signature) {
+//       return res.status(400).json({ message: "Invalid signature" });
+//     }
+
+//     return res.json({ success: true });
+//   } catch (err) {
+//     console.error("VERIFY ERROR:", err);
+//     return res.status(500).json({ message: "Verify failed" });
+//   }
+// }
+
+
+
 async verifyPayment(req, res) {
   try {
+    console.log("✅ VERIFY START");
+
     const {
-      razorpay_payment_id,
       razorpay_order_id,
+      razorpay_payment_id,
       razorpay_signature,
+      addressId,
+      paymentGateway,
     } = req.body;
 
-    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
-      return res.status(400).json({ message: "Invalid payment data" });
-    }
+    console.log("BODY:", req.body);
 
+    /* =======================
+       1️⃣ VERIFY SIGNATURE
+    ======================== */
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-    const expectedSignature = crypto
+    const expected = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body)
       .digest("hex");
 
-    if (expectedSignature !== razorpay_signature) {
+    if (expected !== razorpay_signature) {
+      console.log("❌ SIGNATURE FAIL");
       return res.status(400).json({ message: "Invalid signature" });
     }
 
+    console.log("✅ SIGNATURE OK");
+
+    /* =======================
+       2️⃣ FETCH ADDRESS
+    ======================== */
+    const addressDoc = await Address.findById(addressId);
+
+    if (!addressDoc) {
+      console.log("❌ ADDRESS NOT FOUND");
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    const shippingAddress = {
+      name: addressDoc.name,
+      mobile: addressDoc.mobile,
+      address: addressDoc.address,
+      locality: addressDoc.locality,
+      city: addressDoc.city,
+      state: addressDoc.state,
+      pinCode: addressDoc.pinCode, // ⚠️ spelling IMPORTANT
+    };
+
+    console.log("✅ ADDRESS OK");
+
+    /* =======================
+       3️⃣ FETCH CART
+    ======================== */
+    const cart = await CartService.findUserCart(req.user._id);
+
+    if (!cart || !cart.cartItems.length) {
+      console.log("❌ CART EMPTY");
+      return res.status(400).json({ message: "Cart empty" });
+    }
+
+    console.log("✅ CART OK");
+
+    /* =======================
+       4️⃣ CREATE ORDER
+    ======================== */
+    const orders = await OrderService.createorder(
+      req.user,
+      shippingAddress,
+      cart,
+      paymentGateway
+    );
+
+    console.log("✅ ORDER CREATED");
+
+    /* =======================
+       5️⃣ UPDATE STATUS
+    ======================== */
+    await Order.updateMany(
+      { _id: { $in: orders.map(o => o._id) } },
+      {
+        paymentStatus: "PAID",
+        orderStatus: "CONFIRMED",
+      }
+    );
+
+    console.log("🎉 VERIFY SUCCESS");
+
     return res.json({ success: true });
+
   } catch (err) {
-    console.error("VERIFY ERROR:", err);
-    return res.status(500).json({ message: "Verify failed" });
+    console.error("❌ VERIFY CRASH:", err);
+    return res.status(500).json({
+      message: "Payment verification failed",
+      error: err.message,
+    });
   }
 }
-
 
 
   /* =================================================
