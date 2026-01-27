@@ -11,4 +11,27 @@ router.get(
   AdminOrderController.getAllOrders
 );
 
+// Admin generates invoice (email)
+router.post(
+  "/admin/orders/:orderId/invoice",
+  authMiddleware,
+  AdminOrderController.generateInvoice
+);
+
+// Admin generates label (safety)
+router.post(
+  "/admin/orders/:orderId/courier/label",
+  authMiddleware,
+  AdminOrderController.generateLabel
+);
+
+
+// 🔥 ADMIN → UPDATE SHIPPING (manual DTDC)
+router.put(
+  "/orders/:orderId/shipping",
+  authMiddleware,
+  AdminOrderController.updateShipping
+);
+
+
 module.exports = router;

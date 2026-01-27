@@ -294,6 +294,9 @@ const AdminPayoutRoutes = require("./routers/AdminPayoutRoutes.js");
 
 const sellerWalletRoutes = require("./routers/SellerWalletRoutes.js");
 
+const adminOrderRoutes = require("./routers/adminOrderRoutes.js");
+
+
 const adminPaymentRoutes = require("./routers/AdminPaymentRoutes.js");
 
 const homeCategoryRoutes = require("./routers/HomeCategoryRoutes.js");
@@ -332,6 +335,9 @@ app.use("/admin", adminRoutes);
 app.use("/admin/deals", dealRoutes);
 
 app.use("/api/admin/payments", adminPaymentRoutes);
+
+app.use("/admin", adminOrderRoutes);
+
 
 app.use("/home", homeCategoryRoutes);
 app.use("/api/coupons", couponRoutes);

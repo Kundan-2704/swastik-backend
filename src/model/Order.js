@@ -79,6 +79,48 @@ const orderSchema = new mongoose.Schema({
     default: 0,
   },
 
+courier: {
+  partner: String,
+  awb: String,
+  status: String,
+  history: [
+    {
+      status: String,
+      time: Date,
+      location: String
+    }
+  ],
+  expectedDelivery: Date,
+  lastUpdated: Date
+}
+,
+
+invoice: {
+  invoiceNo: String,
+  pdfUrl: String,
+  sentToCustomer: Boolean,
+},
+
+
+shipping: {
+  courier: { type: String, default: "DTDC" },
+  awb: { type: String, default: "" },
+  status: {
+    type: String,
+    enum: [
+      "READY_TO_SHIP",
+      "PICKED_UP",
+      "IN_TRANSIT",
+      "DELIVERED"
+    ],
+    default: "READY_TO_SHIP"
+  },
+  pickupDate: Date,
+  deliveredDate: Date,
+  manual: { type: Boolean, default: true }
+}
+
+
 
 }, { timestamps: true });
 

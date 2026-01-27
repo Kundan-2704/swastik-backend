@@ -1,4 +1,6 @@
 const Order = require("../model/Order");
+const invoiceService = require("../service/InvoiceService");
+const courierService = require("../service/courier");
 
 class AdminOrderController {
 
@@ -56,6 +58,53 @@ class AdminOrderController {
   }
 
 
+  async generateInvoice(req, res) {
+    const order = await Order.findById(req.params.orderId);
+
+    const invoice = await invoiceService.generateInvoice(order);
+    await invoiceService.sendInvoiceToCustomer(order, invoice);
+
+    order.invoice = {
+      ...invoice,
+      sentToCustomer: true
+    };
+    await order.save();
+
+    res.json({ message: "Invoice generated & sent" });
+  }
+
+  async generateLabel(req, res) {
+    const order = await Order.findById(req.params.orderId);
+    const label = await courierService.generateLabel(order);
+
+    res.json({ label });
+  }
+
+
+  async updateShipping  (req, res)  {
+  try {
+    const { orderId } = req.params;
+    const { courier, awb, status, pickupDate, deliveredDate } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    order.shipping = {
+      courier,
+      awb,
+      status,
+      pickupDate,
+      deliveredDate,
+      manual: true
+    };
+
+    await order.save();
+
+    res.json({ success: true, shipping: order.shipping });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 
 }

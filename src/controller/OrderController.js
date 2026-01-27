@@ -111,32 +111,7 @@ for (const sellerId of sellerIds) {
     }
   }
 
-  // async getOrderById(req, res) {
-  //   try {
-  //     const { orderId } = req.params;
-  //     const order = await OrderService.findOrderItemById(orderId);
-  //     return res.status(200).json(order);
-  //   } catch (error) {
-  //     return res.status(400).json({ error: error.message });
-  //   }
-  // }
-
-  // async getOrderItemById(req, res) {
-  //   try {
-  //     const { orderItemId } = req.params;
-  //     const userId = req.user._id;
-
-  //     const orderItem = await OrderService.findOrderItemById(
-  //       orderItemId,
-  //       userId
-  //     );
-
-  //     return res.status(200).json(orderItem);
-  //   } catch (error) {
-  //     return res.status(401).json({ error: error.message });
-  //   }
-  // }
-
+ 
 
 // =================================================
 // ✅ GET ORDER BY ID (ADMIN / SELLER / CUSTOMER SAFE)
