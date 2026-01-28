@@ -141,11 +141,144 @@ class ProductService {
 
 
 
-  async getAllProducts(query) {
+//   async getAllProducts(query) {
+//   try {
+//     const {
+//       categoryId,
+//       search,              // ✅ ADD THIS
+//       pageNumber = 1,
+//       sort = "newest",
+//       color,
+//       size,
+//       minPrice,
+//       maxPrice,
+//       minDiscount,
+//     } = query;
+
+//     const filterQuery = {};
+
+//     /* ================= SEARCH (🔥 MAIN FIX) ================= */
+//     if (search) {
+//       filterQuery.$or = [
+//         { name: { $regex: search, $options: "i" } },
+//         { description: { $regex: search, $options: "i" } },
+//         { fabric: { $regex: search, $options: "i" } },
+//       ];
+//     }
+
+//     /* ================= CATEGORY FILTER ================= */
+//     if (categoryId) {
+//       const selectedCategory = await Category.findOne({ categoryId });
+
+//       if (!selectedCategory) {
+//         return {
+//           content: [],
+//           totalPages: 0,
+//           totalElement: 0,
+//         };
+//       }
+
+//       let categoryIds = [];
+
+//       if (selectedCategory.level === 3) {
+//         categoryIds = [selectedCategory._id];
+//       } else if (selectedCategory.level === 2) {
+//         const level3 = await Category.find({
+//           parentCategory: selectedCategory._id,
+//         });
+
+//         categoryIds =
+//           level3.length > 0
+//             ? level3.map((c) => c._id)
+//             : [selectedCategory._id];
+//       } else if (selectedCategory.level === 1) {
+//         const level2 = await Category.find({
+//           parentCategory: selectedCategory._id,
+//         });
+
+//         const level2Ids = level2.map((c) => c._id);
+
+//         const level3 = await Category.find({
+//           parentCategory: { $in: level2Ids },
+//         });
+
+//         categoryIds =
+//           level3.length > 0
+//             ? level3.map((c) => c._id)
+//             : level2Ids;
+//       }
+
+//       if (categoryIds.length > 0) {
+//         filterQuery.category = { $in: categoryIds };
+//       }
+//     }
+
+//     /* ================= OTHER FILTERS ================= */
+//     if (color) filterQuery["colors.name"] = color;
+//     if (size) filterQuery.sizes = size;
+
+//     if (minPrice && maxPrice) {
+//       filterQuery.sellingPrice = {
+//         $gte: Number(minPrice),
+//         $lte: Number(maxPrice),
+//       };
+//     }
+
+//     if (minDiscount) {
+//       filterQuery.discountPercent = {
+//         $gte: Number(minDiscount),
+//       };
+//     }
+
+//     /* ================= SORT ================= */
+//     // let sortQuery = {};
+//     // if (sort === "price_low") sortQuery.sellingPrice = 1;
+//     // if (sort === "price_high") sortQuery.sellingPrice = -1;
+
+//         let sortQuery = {};
+
+//     if (sort === "price_low") {
+//       sortQuery = { sellingPrice: 1 };
+//     } else if (sort === "price_high") {
+//       sortQuery = { sellingPrice: -1 };
+//     } else {
+//       // ✅ newest product first (default)
+//       sortQuery = { createdAt: -1 };
+//     }
+
+
+//     /* ================= PAGINATION ================= */
+//     const limit = 12;
+//     const page = Math.max(Number(pageNumber), 1);
+//     const skip = (page - 1) * limit;
+
+//     const products = await Product.find(filterQuery)
+//       .populate("seller", "businessDetails")
+//       .populate("category", "name categoryId level")
+//       .sort(sortQuery)
+//       .skip(skip)
+//       .limit(limit);
+
+//     const totalElement = await Product.countDocuments(filterQuery);
+//     const totalPages = Math.ceil(totalElement / limit);
+
+//     return {
+//       content: products,
+//       totalPages,
+//       totalElement,
+//     };
+//   } catch (error) {
+//     console.error("GET ALL PRODUCTS ERROR →", error.message);
+//     throw error;
+//   }
+// }
+
+
+async getAllProducts(query) {
   try {
     const {
       categoryId,
-      search,              // ✅ ADD THIS
+      search,
       pageNumber = 1,
       sort = "newest",
       color,
@@ -157,7 +290,7 @@ class ProductService {
 
     const filterQuery = {};
 
-    /* ================= SEARCH (🔥 MAIN FIX) ================= */
+    /* ================= SEARCH ================= */
     if (search) {
       filterQuery.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -170,6 +303,7 @@ class ProductService {
     if (categoryId) {
       const selectedCategory = await Category.findOne({ categoryId });
 
+      // ❌ invalid category
       if (!selectedCategory) {
         return {
           content: [],
@@ -180,9 +314,13 @@ class ProductService {
 
       let categoryIds = [];
 
+      // level 3 (leaf)
       if (selectedCategory.level === 3) {
         categoryIds = [selectedCategory._id];
-      } else if (selectedCategory.level === 2) {
+      }
+
+      // level 2
+      else if (selectedCategory.level === 2) {
         const level3 = await Category.find({
           parentCategory: selectedCategory._id,
         });
@@ -191,26 +329,41 @@ class ProductService {
           level3.length > 0
             ? level3.map((c) => c._id)
             : [selectedCategory._id];
-      } else if (selectedCategory.level === 1) {
+      }
+
+      // level 1 (🔥 FIXED BUG)
+      else if (selectedCategory.level === 1) {
         const level2 = await Category.find({
           parentCategory: selectedCategory._id,
         });
 
-        const level2Ids = level2.map((c) => c._id);
+        if (level2.length === 0) {
+          // 🔥 VERY IMPORTANT FIX
+          categoryIds = [selectedCategory._id];
+        } else {
+          const level2Ids = level2.map((c) => c._id);
 
-        const level3 = await Category.find({
-          parentCategory: { $in: level2Ids },
-        });
+          const level3 = await Category.find({
+            parentCategory: { $in: level2Ids },
+          });
 
-        categoryIds =
-          level3.length > 0
-            ? level3.map((c) => c._id)
-            : level2Ids;
+          categoryIds =
+            level3.length > 0
+              ? level3.map((c) => c._id)
+              : level2Ids;
+        }
       }
 
-      if (categoryIds.length > 0) {
-        filterQuery.category = { $in: categoryIds };
+      // 🔒 safety net
+      if (categoryIds.length === 0) {
+        return {
+          content: [],
+          totalPages: 0,
+          totalElement: 0,
+        };
       }
+
+      filterQuery.category = { $in: categoryIds };
     }
 
     /* ================= OTHER FILTERS ================= */
@@ -231,21 +384,14 @@ class ProductService {
     }
 
     /* ================= SORT ================= */
-    // let sortQuery = {};
-    // if (sort === "price_low") sortQuery.sellingPrice = 1;
-    // if (sort === "price_high") sortQuery.sellingPrice = -1;
-
-        let sortQuery = {};
-
+    let sortQuery = {};
     if (sort === "price_low") {
       sortQuery = { sellingPrice: 1 };
     } else if (sort === "price_high") {
       sortQuery = { sellingPrice: -1 };
     } else {
-      // ✅ newest product first (default)
       sortQuery = { createdAt: -1 };
     }
-
 
     /* ================= PAGINATION ================= */
     const limit = 12;
@@ -260,7 +406,7 @@ class ProductService {
       .limit(limit);
 
     const totalElement = await Product.countDocuments(filterQuery);
-    const totalPages = Math.ceil(totalElement / limit);
+    const totalPages = Math.max(1, Math.ceil(totalElement / limit));
 
     return {
       content: products,

@@ -306,6 +306,8 @@ const policyRoutes = require("./routers/policyRoutes.js");
 
 const notificationRoutes = require("./routers/NotificationRoutes.js");
 
+const returnRoutes = require("./routers/ReturnRoutes.js");
+
 /* ================= MOUNTS ================= */
 
 app.use("/auth", authRoutes);
@@ -344,6 +346,8 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api", policyRoutes);
 
 app.use("/notifications", notificationRoutes);
+
+app.use("/api/returns", returnRoutes);
 
 /* ================= SERVER ================= */
 
