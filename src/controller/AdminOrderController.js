@@ -1,5 +1,6 @@
 const Order = require("../model/Order");
 const invoiceService = require("../service/InvoiceService");
+const OrderService = require("../service/OrderService");
 const courierService = require("../service/courier");
 
 class AdminOrderController {
@@ -56,6 +57,16 @@ class AdminOrderController {
       });
     }
   }
+
+  async updateOrderStatus(req, res) {
+  try {
+    const { orderId, orderStatus } = req.params;
+    const order = await OrderService.updateOrderStatus(orderId, orderStatus);
+    res.status(200).json(order);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
 
 
   async generateInvoice(req, res) {

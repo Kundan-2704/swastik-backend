@@ -11,6 +11,14 @@ router.get(
   AdminOrderController.getAllOrders
 );
 
+router.patch(
+  "/orders/:orderId/status/:orderStatus",
+  authMiddleware,
+  AdminOrderController.updateOrderStatus
+);
+
+
+
 // Admin generates invoice (email)
 router.post(
   "/admin/orders/:orderId/invoice",
