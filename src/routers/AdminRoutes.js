@@ -72,6 +72,12 @@ router.get(
   AdminOrderController.getOrderById
 );
 
+// 📦 BULK MONTHLY INVOICE ZIP
+router.get(
+  "/orders/invoices/bulk",
+  authMiddleware,
+  AdminOrderController.downloadMonthlyInvoicesZip
+);
 
 
 

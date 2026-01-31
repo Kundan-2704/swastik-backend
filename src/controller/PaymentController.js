@@ -15,6 +15,7 @@ const OrderService = require("../service/OrderService");
 
 
 const Notification = require("../model/Notification");
+const InvoiceService = require("../service/InvoiceService");
 
 class PaymentController {
   /* =================================================
@@ -388,6 +389,16 @@ async verifyPayment(req, res) {
     );
 
     console.log("🎉 VERIFY SUCCESS");
+
+    /* =======================
+   6️⃣ GENERATE INVOICE
+======================= */
+for (const order of orders) {
+  await InvoiceService.generate(order._id);
+}
+
+console.log("🧾 INVOICE GENERATED");
+
 
     return res.json({ success: true });
 

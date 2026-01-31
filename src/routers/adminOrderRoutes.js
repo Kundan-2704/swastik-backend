@@ -42,4 +42,13 @@ router.put(
 );
 
 
+// 🔽 ADMIN → DOWNLOAD INVOICE
+router.get(
+  "/orders/:orderId/invoice/download",
+  authMiddleware,
+  AdminOrderController.downloadInvoice
+);
+
+
+
 module.exports = router;

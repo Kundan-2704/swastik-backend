@@ -3,6 +3,11 @@ const invoiceService = require("../service/InvoiceService");
 const OrderService = require("../service/OrderService");
 const courierService = require("../service/courier");
 
+const path = require("path");
+const fs = require("fs");
+const mongoose = require("mongoose"); // ✅ ADD THIS
+const archiver = require("archiver");
+
 class AdminOrderController {
 
 
@@ -116,6 +121,81 @@ class AdminOrderController {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+ // ✅ FIXED: now inside class
+  async downloadInvoice(req, res) {
+    try {
+      const { orderId } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return res.status(400).json({ message: "Invalid order id" });
+      }
+
+      const order = await Order.findById(orderId);
+
+      if (!order?.invoice?.pdfUrl) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+
+      const absolutePath = path.resolve(order.invoice.pdfUrl);
+
+      if (!fs.existsSync(absolutePath)) {
+        return res.status(404).json({ message: "Invoice file missing" });
+      }
+
+      return res.download(absolutePath);
+    } catch (err) {
+      console.error("Admin invoice download error:", err);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+
+  async downloadMonthlyInvoicesZip(req, res) {
+  try {
+    const { month, year } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({ message: "Month and year required" });
+    }
+
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+
+    const orders = await Order.find({
+      createdAt: { $gte: start, $lt: end },
+      "invoice.pdfUrl": { $exists: true },
+    });
+
+    if (!orders.length) {
+      return res.status(404).json({ message: "No invoices found" });
+    }
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=GST-${month}-${year}-invoices.zip`
+    );
+    res.setHeader("Content-Type", "application/zip");
+
+    const archive = archiver("zip", { zlib: { level: 9 } });
+    archive.pipe(res);
+
+    for (const order of orders) {
+      const filePath = path.resolve(order.invoice.pdfUrl);
+      if (fs.existsSync(filePath)) {
+        archive.file(filePath, {
+          name: `invoice-${order._id}.pdf`,
+        });
+      }
+    }
+
+    await archive.finalize();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to create ZIP" });
+  }
+}
 
 
 }

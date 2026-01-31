@@ -308,6 +308,10 @@ const notificationRoutes = require("./routers/NotificationRoutes.js");
 
 const returnRoutes = require("./routers/ReturnRoutes.js");
 
+const packingSlipRoutes = require("./routers/PackingSlipRoutes.js");
+
+const invoiceRoutes = require("./routers/InvoiceRoutes.js");
+
 /* ================= MOUNTS ================= */
 
 app.use("/auth", authRoutes);
@@ -348,6 +352,11 @@ app.use("/api", policyRoutes);
 app.use("/notifications", notificationRoutes);
 
 app.use("/api/returns", returnRoutes);
+
+app.use("/api", packingSlipRoutes);
+
+app.use("/api", invoiceRoutes);
+
 
 /* ================= SERVER ================= */
 

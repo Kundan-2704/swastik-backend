@@ -40,4 +40,13 @@ router.get('/:orderId', authMiddleware, Ordercontroller.getOrderById);
 // ❌ Cancel order (🔥 REQUIRED)
 router.patch('/:orderId/cancel', authMiddleware, Ordercontroller.cancelOrder);
 
+
+// 📄 Download invoice
+router.get(
+  "/:orderId/invoice",
+  authMiddleware,
+  Ordercontroller.downloadInvoice
+);
+
+
 module.exports = router;

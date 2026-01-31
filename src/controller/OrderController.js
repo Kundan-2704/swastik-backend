@@ -226,6 +226,22 @@ async getOrderItemById(req, res) {
     }
   };
 
+
+  async downloadInvoice(req, res) {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+
+    if (!order?.invoice?.pdfUrl) {
+      return res.status(404).json({ message: "Invoice not found" });
+    }
+
+    return res.download(order.invoice.pdfUrl);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 }
 
 module.exports = new OrderController();
