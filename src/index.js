@@ -230,6 +230,7 @@ const express = require("express");
 const connectDB = require("./db/db");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const path = require("path");
 
 const app = express();
 
@@ -262,6 +263,9 @@ app.use("/api/payment", webhookRoutes); // ⚠️ raw body untouched
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/invoices", express.static(path.join(process.cwd(), "invoices")));
+
 
 /* ================= TEST ================= */
 app.get("/", (req, res) => {
