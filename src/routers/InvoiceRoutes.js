@@ -1,3 +1,7 @@
+// 
+
+
+
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
@@ -9,7 +13,6 @@ router.get("/invoice/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
 
-    // ✅ prevent crash
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
       return res.status(400).json({ message: "Invalid order id" });
     }
@@ -20,15 +23,16 @@ router.get("/invoice/:orderId", async (req, res) => {
       return res.status(404).json({ message: "Invoice not found" });
     }
 
-    // ✅ absolute path resolve (safe)
-    const absolutePath = path.resolve(order.invoice.pdfUrl);
+    // ✅ FIXED PATH (THIS WAS THE BUG)
+    const absolutePath = path.join(
+      process.cwd(),
+      order.invoice.pdfUrl.replace(/^\/+/, "")
+    );
 
-    // ✅ extra safety
     if (!fs.existsSync(absolutePath)) {
       return res.status(404).json({ message: "Invoice file missing" });
     }
 
-    // ✅ download
     return res.download(absolutePath);
 
   } catch (err) {
