@@ -2,6 +2,59 @@ const mongoose = require("mongoose");
 const OrderStatus = require("../domain/OrderStatus");
 const PaymentStatus = require("../domain/PaymentStatus");
 
+
+
+const replacementSchema = new mongoose.Schema({
+  reason: {
+    type: String,
+    required: true
+  },
+
+  requestedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  },
+
+  status: {
+    type: String,
+    enum: [
+      "REQUESTED",
+      "APPROVED",
+      "REJECTED",
+      "PICKED_UP",
+      "SHIPPED",
+      "DELIVERED",
+      "COMPLETED"
+    ],
+    default: "REQUESTED"
+  },
+
+  requestedAt: {
+    type: Date,
+    default: Date.now
+  },
+
+  approvedAt: Date,
+  rejectedAt: Date,
+
+  pickup: {
+    awb: String,
+    courier: String,
+    pickedUpAt: Date
+  },
+
+  replacementShipment: {
+    awb: String,
+    courier: String,
+    shippedAt: Date,
+    deliveredAt: Date
+  },
+
+  adminNote: String,
+  sellerNote: String
+});
+
+
 const orderSchema = new mongoose.Schema({
 
   user: {
@@ -78,6 +131,11 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  shippingCharge: {
+  type: Number,
+  default: 0
+}
+,
 
 courier: {
   partner: String,
@@ -118,8 +176,13 @@ shipping: {
   pickupDate: Date,
   deliveredDate: Date,
   manual: { type: Boolean, default: true }
-}
+},
 
+  /* ================= REPLACEMENT ================= */
+  replacement: {
+    type: replacementSchema,
+    default: null
+  }
 
 
 }, { timestamps: true });

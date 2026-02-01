@@ -334,7 +334,9 @@ class OrderService {
           ? Math.round((totalSellingPrice / cartSellingTotal) * couponDiscount)
           : 0;
 
-        const shippingCharge = isFirstSeller ? 40 : 0;
+        // const shippingCharge = isFirstSeller ? 40 : 0;
+        const shippingCharge = cart.shippingCharge || 0;
+
 
         const finalPayable =
           totalSellingPrice - sellerCouponDiscount + shippingCharge;
@@ -359,7 +361,8 @@ class OrderService {
           orderItems: [],
 
           totalMrpPrice,
-          totalSellingPrice: finalPayable, // ✅ FINAL PAYABLE
+          totalSellingPrice: finalPayable,
+           shippingCharge, // ✅ FINAL PAYABLE
           discount:
             (totalMrpPrice - totalSellingPrice) + sellerCouponDiscount,
 

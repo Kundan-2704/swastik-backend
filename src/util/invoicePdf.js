@@ -256,14 +256,26 @@ module.exports = async function generateInvoicePDF(order) {
   const buyer = order.shippingAddress;
 
   /* ================= TAX ================= */
-  const grandTotal = order.totalSellingPrice;
-  const taxableValue = Math.round(grandTotal / 1.05);
-  const gst = grandTotal - taxableValue;
+  // const grandTotal = order.totalSellingPrice;
+  // const taxableValue = Math.round(grandTotal / 1.05);
+  // const gst = grandTotal - taxableValue;
 
-  const isInterState = addr.state && buyer.state && addr.state !== buyer.state;
-  const cgst = isInterState ? 0 : gst / 2;
-  const sgst = isInterState ? 0 : gst / 2;
-  const igst = isInterState ? gst : 0;
+  // const isInterState = addr.state && buyer.state && addr.state !== buyer.state;
+  // const cgst = isInterState ? 0 : gst / 2;
+  // const sgst = isInterState ? 0 : gst / 2;
+  // const igst = isInterState ? gst : 0;
+
+  const grandTotal = order.totalSellingPrice; // FINAL PAID AMOUNT
+
+const taxableValue = Math.round(grandTotal / 1.05);
+const gstTotal = grandTotal - taxableValue;
+
+const isInterState = addr.state && buyer.state && addr.state !== buyer.state;
+
+const cgst = isInterState ? 0 : gstTotal / 2;
+const sgst = isInterState ? 0 : gstTotal / 2;
+const igst = isInterState ? gstTotal : 0;
+
 
   /* ================= HEADER ================= */
   doc.fontSize(18).font("Helvetica-Bold").text("TAX INVOICE", { align: "center" });

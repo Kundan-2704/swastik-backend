@@ -316,6 +316,8 @@ const packingSlipRoutes = require("./routers/PackingSlipRoutes.js");
 
 const invoiceRoutes = require("./routers/InvoiceRoutes.js");
 
+const ReplacementRoutes = require("./routers/ReplacementRoutes.js");
+
 /* ================= MOUNTS ================= */
 
 app.use("/auth", authRoutes);
@@ -361,6 +363,8 @@ app.use("/api", packingSlipRoutes);
 
 app.use("/api", invoiceRoutes);
 
+
+app.use("/api/replacements", ReplacementRoutes);
 
 /* ================= SERVER ================= */
 
