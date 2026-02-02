@@ -377,13 +377,30 @@ const igst = isInterState ? gstTotal : 0;
 
   /* ================= QR ================= */
   const qr = await QRCode.toDataURL(`https://swastik.com/order/${order._id}`);
+  // doc.image(qr, 40, y + 120, { width: 90 });
+
+  // doc.end();
+
+  // return {
+  //   invoiceNo,
+  //   filePath,
+  //   url: `/invoices/${invoiceNo}.pdf`
+  // };
+
   doc.image(qr, 40, y + 120, { width: 90 });
 
-  doc.end();
+doc.end();
 
-  return {
-    invoiceNo,
-    filePath,
-    url: `/invoices/${invoiceNo}.pdf`
-  };
+await new Promise((resolve, reject) => {
+  writeStream.on("finish", resolve);
+  writeStream.on("error", reject);
+});
+
+return {
+  invoiceNo,
+  filePath,
+  url: `/invoices/${invoiceNo}.pdf`
+};
+
+
 };
