@@ -228,14 +228,8 @@ module.exports = async function generateInvoicePDF(order) {
   const invoiceNo = `INV-${new Date().getFullYear()}-${order._id.toString().slice(-6)}`;
   const filePath = path.join(invoiceDir, `${invoiceNo}.pdf`);
 
-  // const doc = new PDFDocument({ size: "A4", margin: 40 });
-  // doc.pipe(fs.createWriteStream(filePath));
-
   const doc = new PDFDocument({ size: "A4", margin: 40 });
-
-const writeStream = fs.createWriteStream(filePath);
-doc.pipe(writeStream);
-
+  doc.pipe(fs.createWriteStream(filePath));
 
   const GOLD = "#B08D57";
   const DARK = "#222";
@@ -377,30 +371,13 @@ const igst = isInterState ? gstTotal : 0;
 
   /* ================= QR ================= */
   const qr = await QRCode.toDataURL(`https://swastik.com/order/${order._id}`);
-  // doc.image(qr, 40, y + 120, { width: 90 });
-
-  // doc.end();
-
-  // return {
-  //   invoiceNo,
-  //   filePath,
-  //   url: `/invoices/${invoiceNo}.pdf`
-  // };
-
   doc.image(qr, 40, y + 120, { width: 90 });
 
-doc.end();
+  doc.end();
 
-await new Promise((resolve, reject) => {
-  writeStream.on("finish", resolve);
-  writeStream.on("error", reject);
-});
-
-return {
-  invoiceNo,
-  filePath,
-  url: `/invoices/${invoiceNo}.pdf`
-};
-
-
+  return {
+    invoiceNo,
+    filePath,
+    url: `/invoices/${invoiceNo}.pdf`
+  };
 };

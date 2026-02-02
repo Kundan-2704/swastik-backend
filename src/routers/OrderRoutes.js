@@ -34,20 +34,19 @@ router.get('/user', authMiddleware, Ordercontroller.getUserOrderHistory);
 // 📦 Get a specific order item by ID
 router.get('/item/:orderItemId', authMiddleware, Ordercontroller.getOrderItemById);
 
-// 📄 Download invoice
-router.get(
-  "/:orderId/invoice",
-  Ordercontroller.downloadInvoice
-);
-
-
+// 📑 Get full order details by order ID
+router.get('/:orderId', authMiddleware, Ordercontroller.getOrderById);
 
 // ❌ Cancel order (🔥 REQUIRED)
 router.patch('/:orderId/cancel', authMiddleware, Ordercontroller.cancelOrder);
 
 
-// 📑 Get full order details by order ID
-router.get('/:orderId', authMiddleware, Ordercontroller.getOrderById);
+// 📄 Download invoice
+router.get(
+  "/:orderId/invoice",
+  authMiddleware,
+  Ordercontroller.downloadInvoice
+);
 
 
 module.exports = router;
