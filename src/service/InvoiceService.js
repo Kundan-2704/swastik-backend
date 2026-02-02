@@ -59,12 +59,27 @@ const generateInvoicePDF = require("../util/invoicePdf");
 
 class InvoiceService {
   async generate(orderId) {
+    // const order = await Order.findById(orderId)
+    //   .populate("seller")
+      
+    //   .populate({
+    //     path: "orderItems",
+    //     populate: { path: "product" },
+    //   });
+
     const order = await Order.findById(orderId)
-      .populate("seller")
-      .populate({
-        path: "orderItems",
-        populate: { path: "product" },
-      });
+  .populate({
+    path: "seller",
+    populate: {
+      path: "pickupAddress",
+      model: "Address",
+    },
+  })
+  .populate({
+    path: "orderItems",
+    populate: { path: "product" },
+  });
+
 
     if (!order) throw new Error("Order not found");
 
