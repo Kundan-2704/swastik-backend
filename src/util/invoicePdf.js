@@ -228,8 +228,14 @@ module.exports = async function generateInvoicePDF(order) {
   const invoiceNo = `INV-${new Date().getFullYear()}-${order._id.toString().slice(-6)}`;
   const filePath = path.join(invoiceDir, `${invoiceNo}.pdf`);
 
+  // const doc = new PDFDocument({ size: "A4", margin: 40 });
+  // doc.pipe(fs.createWriteStream(filePath));
+
   const doc = new PDFDocument({ size: "A4", margin: 40 });
-  doc.pipe(fs.createWriteStream(filePath));
+
+const writeStream = fs.createWriteStream(filePath);
+doc.pipe(writeStream);
+
 
   const GOLD = "#B08D57";
   const DARK = "#222";
