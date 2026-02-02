@@ -8,6 +8,9 @@ const createNotification = require("../util/createNotification");
 const UserRoles = require("../domain/userRole");
 const { SUCCESS } = require("../domain/PaymentStatus");
 
+const path = require("path");
+const fs = require("fs");
+
 class OrderController {
 
   // =================================================
@@ -227,7 +230,23 @@ async getOrderItemById(req, res) {
   };
 
 
-  async downloadInvoice(req, res) {
+//   async downloadInvoice(req, res) {
+//   try {
+//     const { orderId } = req.params;
+//     const order = await Order.findById(orderId);
+
+//     if (!order?.invoice?.pdfUrl) {
+//       return res.status(404).json({ message: "Invoice not found" });
+//     }
+
+//     return res.download(order.invoice.pdfUrl);
+//   } catch (err) {
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+
+async downloadInvoice(req, res) {
   try {
     const { orderId } = req.params;
     const order = await Order.findById(orderId);
@@ -236,11 +255,23 @@ async getOrderItemById(req, res) {
       return res.status(404).json({ message: "Invoice not found" });
     }
 
-    return res.download(order.invoice.pdfUrl);
+    // ✅ URL se sirf filename nikalo
+    const fileName = path.basename(order.invoice.pdfUrl);
+
+    // ✅ REAL filesystem path banao
+    const filePath = path.join(process.cwd(), "invoices", fileName);
+
+    // ✅ safety check
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "Invoice file missing on server" });
+    }
+
+    return res.download(filePath);
   } catch (err) {
+    console.error("DOWNLOAD INVOICE ERROR 👉", err);
     res.status(500).json({ message: "Server error" });
   }
-};
+}
 
 }
 
