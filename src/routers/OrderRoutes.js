@@ -37,7 +37,6 @@ router.get('/item/:orderItemId', authMiddleware, Ordercontroller.getOrderItemByI
 // 📄 Download invoice
 router.get(
   "/:orderId/invoice",
-  authMiddleware,
   Ordercontroller.downloadInvoice
 );
 
