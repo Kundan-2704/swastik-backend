@@ -217,8 +217,12 @@ async getOrderItemById(req, res) {
         return res.status(400).json({ message: "Delivered order cannot be cancelled" });
       }
 
-      order.orderStatus = "CANCELLED";
-      await order.save();
+      // order.orderStatus = "CANCELLED";
+      // await order.save();
+
+      const cancelledOrder = await OrderService.cancelOrder(orderId, req.user);
+res.status(200).json(cancelledOrder);
+
 
       res.status(200).json(order);
     } catch (error) {

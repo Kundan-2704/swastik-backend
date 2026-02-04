@@ -38,7 +38,7 @@ router.get('/item/:orderItemId', authMiddleware, Ordercontroller.getOrderItemByI
 router.get('/:orderId', authMiddleware, Ordercontroller.getOrderById);
 
 // ❌ Cancel order (🔥 REQUIRED)
-router.patch('/:orderId/cancel', authMiddleware, Ordercontroller.cancelOrder);
+router.post('/:orderId/cancel', authMiddleware, Ordercontroller.cancelOrder);
 
 
 // 📄 Download invoice

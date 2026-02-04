@@ -256,6 +256,15 @@ const Order = require("../model/Order");
 const OrderItem = require("../model/OrderItem");
 const OrderStatus = require("../domain/OrderStatus");
 const notificationService = require("./notificationService");
+const UserRoles = require("../domain/userRole");
+
+// ✅ notification map (GLOBAL for this file)
+const ORDER_NOTIFICATION_MAP = {
+  PLACED: { title: "Order Confirmed", message: "Your order has been confirmed" },
+  SHIPPED: { title: "Order Shipped", message: "Your order has been shipped" },
+  DELIVERED: { title: "Order Delivered", message: "Your order has been delivered successfully" },
+  CANCELLED: { title: "Order Cancelled", message: "Your order has been cancelled" },
+};
 
 class OrderService {
 
@@ -395,8 +404,8 @@ class OrderService {
         orders.push(savedOrder);
 
         await notificationService.createNotification({
-          userId: sellerId,
-          role: "SELLER",
+            userId: req.user.id, 
+          role: "seller",
           title: "New Order Received",
           message: `Order #${savedOrder._id} received`,
           type: "ORDER",
@@ -411,11 +420,19 @@ class OrderService {
 
       await notificationService.createNotification({
         userId: user._id,
-        role: "CUSTOMER",
+        role: "customer",
         title: "Order Placed Successfully",
         message: "Your order has been placed successfully",
         type: "ORDER",
         link: `/orders`,
+      });
+
+      await notificationService.createNotification({
+        role: "admin",        // 👈 ROLE_ADMIN
+        title: "New Order Placed",
+        message: `Order #${orders[0]._id} placed by ${user.name}`,
+        type: "ORDER",
+        link: `/admin/orders/${orders[0]._id}`,
       });
 
       // ===============================
@@ -465,61 +482,182 @@ class OrderService {
   // =================================================
   // ✅ UPDATE ORDER STATUS (FIXED – NO 400 ERROR)
   // =================================================
+  // async updateOrderStatus(orderId, orderStatus) {
+  //   const allowedStatus = [
+  //     "PENDING",
+  //     "PLACED",
+  //     "SHIPPED",
+  //     "DELIVERED",
+  //     "CANCELLED",
+  //   ];
+
+  //   if (!allowedStatus.includes(orderStatus)) {
+  //     throw new Error("Invalid order status");
+  //   }
+
+  //   const updatedOrder = await Order.findByIdAndUpdate(
+  //     orderId,
+  //     { orderStatus },                 // ✅ update only one field
+  //     {
+  //       new: true,
+  //       runValidators: false,           // 🔥 IMPORTANT
+  //     }
+  //   ).populate([
+  //     { path: "seller" },
+  //     { path: "orderItems", populate: { path: "product" } },
+  //   ]);
+
+  //   if (!updatedOrder) {
+  //     throw new Error("Order not found");
+  //   }
+
+  //   return updatedOrder;
+  // }
+
   async updateOrderStatus(orderId, orderStatus) {
-    const allowedStatus = [
-      "PENDING",
-      "PLACED",
-      "SHIPPED",
-      "DELIVERED",
-      "CANCELLED",
-    ];
+  const allowedStatus = [
+    "PENDING",
+    "PLACED",
+    "SHIPPED",
+    "DELIVERED",
+    "CANCELLED",
+  ];
 
-    if (!allowedStatus.includes(orderStatus)) {
-      throw new Error("Invalid order status");
-    }
-
-    const updatedOrder = await Order.findByIdAndUpdate(
-      orderId,
-      { orderStatus },                 // ✅ update only one field
-      {
-        new: true,
-        runValidators: false,           // 🔥 IMPORTANT
-      }
-    ).populate([
-      { path: "seller" },
-      { path: "orderItems", populate: { path: "product" } },
-    ]);
-
-    if (!updatedOrder) {
-      throw new Error("Order not found");
-    }
-
-    return updatedOrder;
+  if (!allowedStatus.includes(orderStatus)) {
+    throw new Error("Invalid order status");
   }
+
+  // 🔹 1. Get old order (for status comparison)
+  const oldOrder = await Order.findById(orderId);
+
+  if (!oldOrder) {
+    throw new Error("Order not found");
+  }
+
+  // ❌ Same status → no update, no notification
+  if (oldOrder.orderStatus === orderStatus) {
+    return oldOrder;
+  }
+
+  // 🔹 2. Update status
+  oldOrder.orderStatus = orderStatus;
+  await oldOrder.save({ validateBeforeSave: false });
+
+  // 🔔 3. CUSTOMER notification (from map)
+  if (ORDER_NOTIFICATION_MAP[orderStatus]) {
+    await notificationService.createNotification({
+      userId: oldOrder.user,
+      role: "CUSTOMER",
+      title: ORDER_NOTIFICATION_MAP[orderStatus].title,
+      message: ORDER_NOTIFICATION_MAP[orderStatus].message,
+      type: "ORDER",
+      link: `/orders/${oldOrder._id}`,
+    });
+  }
+
+  // 🔔 4. SELLER notification
+  await notificationService.createNotification({
+    userId: oldOrder.seller,
+    role: "SELLER",
+    title: "Order Status Updated",
+    message: `Order #${oldOrder._id} marked as ${orderStatus}`,
+    type: "ORDER",
+    link: `/seller/orders/${oldOrder._id}`,
+  });
+
+  // 🔹 5. Return updated + populated order
+  return await Order.findById(orderId).populate([
+    { path: "seller" },
+    { path: "orderItems", populate: { path: "product" } },
+  ]);
+}
+
 
   // =================================================
   // ✅ CANCEL ORDER (USER SAFE)
   // =================================================
+  // async cancelOrder(orderId, user) {
+  //   const order = await Order.findById(orderId);
+
+  //   if (!order) {
+  //     throw new Error("Order not found");
+  //   }
+
+  //   if (order.user.toString() !== user._id.toString()) {
+  //     throw new Error("You cannot cancel this order");
+  //   }
+
+  //   order.orderStatus = OrderStatus.CANCELLED;
+
+  //   await order.save({ validateBeforeSave: false });
+
+  //   return await Order.findById(orderId).populate([
+  //     { path: "seller" },
+  //     { path: "orderItems", populate: { path: "product" } },
+  //   ]);
+  // }
+
+
+
   async cancelOrder(orderId, user) {
-    const order = await Order.findById(orderId);
+    console.log("✅ cancelOrder FUNCTION ENTERED");
 
-    if (!order) {
-      throw new Error("Order not found");
-    }
+  const order = await Order.findById(orderId);
 
-    if (order.user.toString() !== user._id.toString()) {
-      throw new Error("You cannot cancel this order");
-    }
-
-    order.orderStatus = OrderStatus.CANCELLED;
-
-    await order.save({ validateBeforeSave: false });
-
-    return await Order.findById(orderId).populate([
-      { path: "seller" },
-      { path: "orderItems", populate: { path: "product" } },
-    ]);
+  if (!order) {
+    throw new Error("Order not found");
   }
+
+  if (order.user.toString() !== user._id.toString()) {
+    throw new Error("You cannot cancel this order");
+  }
+
+  // ❌ Already cancelled → no duplicate notification
+  if (order.orderStatus === OrderStatus.CANCELLED) {
+    return order;
+  }
+
+  // 🔹 Update status
+  order.orderStatus = OrderStatus.CANCELLED;
+  await order.save({ validateBeforeSave: false });
+
+  // 🔔 CUSTOMER notification
+  await notificationService.createNotification({
+    userId: order.user,
+    role: UserRoles.CUSTOMER,
+    title: "Order Cancelled",
+    message: "Your order has been cancelled successfully",
+    type: "ORDER",
+    link: `/orders/${order._id}`,
+  });
+
+  // 🔔 SELLER notification
+  await notificationService.createNotification({
+    userId: order.seller,
+    role: UserRoles.SELLER,
+    title: "Order Cancelled",
+    message: `Order #${order._id} was cancelled by customer`,
+    type: "ORDER",
+    link: `/seller/orders/${order._id}`,
+  });
+
+await notificationService.createNotification({
+  userId: null,                 // 👈 admin specific user nahi hota
+  role: UserRoles.ADMIN,        // 👈 ROLE_ADMIN
+  title: "Order Cancelled",
+  message: `Order #${order._id} was cancelled by customer`,
+  type: "ORDER",
+  link: `/admin/orders/${order._id}`,
+});
+
+
+  // 🔹 Return populated order
+  return await Order.findById(orderId).populate([
+    { path: "seller" },
+    { path: "orderItems", populate: { path: "product" } },
+  ]);
+}
+
 
   // =================================================
   // ✅ FIND ORDER ITEM (SECURE)
