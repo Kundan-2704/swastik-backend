@@ -403,14 +403,14 @@ class OrderService {
         const savedOrder = await order.save();
         orders.push(savedOrder);
 
-        await notificationService.createNotification({
-            userId: req.user.id, 
-          role: "seller",
-          title: "New Order Received",
-          message: `Order #${savedOrder._id} received`,
-          type: "ORDER",
-          link: `/seller/orders/${savedOrder._id}`,
-        });
+        // await notificationService.createNotification({
+        //     userId: req.user.id, 
+        //   role: "seller",
+        //   title: "New Order Received",
+        //   message: `Order #${savedOrder._id} received`,
+        //   type: "ORDER",
+        //   link: `/seller/orders/${savedOrder._id}`,
+        // });
 
 
 
