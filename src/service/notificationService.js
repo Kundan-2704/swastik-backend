@@ -151,32 +151,54 @@ class NotificationService {
   }
 
   /* ---------- CLEAR ALL (MARK READ, NOT DELETE) ---------- */
-  async clearAll(userId, role, sellerId) {
-    const normalizedRole = normalizeRole(role);
+  // async clearAll(userId, role, sellerId) {
+  //   const normalizedRole = normalizeRole(role);
 
-    // ADMIN
-    if (normalizedRole === "admin") {
-      return await Notification.updateMany(
-        { role: "admin" },
-        { $set: { isRead: true } }
-      );
-    }
+  //   // ADMIN
+  //   if (normalizedRole === "admin") {
+  //     return await Notification.updateMany(
+  //       { role: "admin" },
+  //       { $set: { isRead: true } }
+  //     );
+  //   }
 
-    // SELLER
-    if (normalizedRole === "seller") {
-      if (!sellerId) return;
-      return await Notification.updateMany(
-        { sellerId },
-        { $set: { isRead: true } }
-      );
-    }
+  //   // SELLER
+  //   if (normalizedRole === "seller") {
+  //     if (!sellerId) return;
+  //     return await Notification.updateMany(
+  //       { sellerId },
+  //       { $set: { isRead: true } }
+  //     );
+  //   }
 
-    // CUSTOMER
-    return await Notification.updateMany(
-      { userId },
-      { $set: { isRead: true } }
-    );
+  //   // CUSTOMER
+  //   return await Notification.updateMany(
+  //     { userId },
+  //     { $set: { isRead: true } }
+  //   );
+  // }
+
+
+
+async clearAll(userId, role, sellerId) {
+  const normalizedRole = normalizeRole(role);
+
+  // ADMIN
+  if (normalizedRole === "admin") {
+    return await Notification.deleteMany({ role: "admin" });
   }
+
+  // SELLER
+  if (normalizedRole === "seller") {
+    if (!sellerId) return;
+    return await Notification.deleteMany({ sellerId });
+  }
+
+  // CUSTOMER
+  return await Notification.deleteMany({ userId });
+}
+
+
 }
 
 module.exports = new NotificationService();

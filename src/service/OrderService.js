@@ -424,7 +424,8 @@ class OrderService {
         title: "Order Placed Successfully",
         message: "Your order has been placed successfully",
         type: "ORDER",
-        link: `/orders`,
+        // link: `/orders`,
+         link: "/account/orders"
       });
 
       await notificationService.createNotification({
