@@ -318,6 +318,8 @@ const invoiceRoutes = require("./routers/InvoiceRoutes.js");
 
 const ReplacementRoutes = require("./routers/ReplacementRoutes.js");
 
+const ReviewRoutes = require("./routers/ReviewRoutes.js")
+
 /* ================= MOUNTS ================= */
 
 app.use("/auth", authRoutes);
@@ -365,6 +367,8 @@ app.use("/api", invoiceRoutes);
 
 
 app.use("/api/replacements", ReplacementRoutes);
+
+app.use("/api/reviews", ReviewRoutes);
 
 /* ================= SERVER ================= */
 
