@@ -214,13 +214,12 @@ require("dotenv").config();
 
 /* ================= UTILS ================= */
 function numberToWords(num) {
-  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
     "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen",
     "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
   ];
   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
-
-  if (!num || num === 0) return "Zero Only";
 
   function convert(n) {
     if (n < 20) return ones[n];
@@ -239,7 +238,7 @@ const formatINR = (amt) => `₹${Number(amt).toFixed(2)}`;
 /* ================= MAIN ================= */
 module.exports = async function generateInvoicePDF(order) {
 
-  /* ======= SAFE PATH ======= */
+  /* ===== PATH SAFE ===== */
   const invoiceDir = path.join(process.cwd(), "invoices");
   if (!fs.existsSync(invoiceDir)) {
     fs.mkdirSync(invoiceDir, { recursive: true });
@@ -251,12 +250,11 @@ module.exports = async function generateInvoicePDF(order) {
   const doc = new PDFDocument({ size: "A4", margin: 40 });
   doc.pipe(fs.createWriteStream(filePath));
 
-  /* ================= BRANDING ================= */
+  /* ================= BRAND ================= */
   const BRAND_NAME = process.env.BRAND_NAME || "Swastik – Heritage Woven Luxury";
   const BRAND_WEBSITE = process.env.BRAND_WEBSITE || "https://swastik.com";
-  const brandLogo = path.join(__dirname, "../assets/swastik-logo.png");
 
-  /* ================= COLORS (WEBSITE MATCH) ================= */
+  /* ================= COLORS ================= */
   const GOLD = "#B08D57";
   const MAROON = "#5A1E2D";
   const DARK = "#222";
@@ -271,7 +269,7 @@ module.exports = async function generateInvoicePDF(order) {
   const sellerName = business.businessName || seller.sellerName;
   const sellerEmail = business.businessEmail || seller.email;
 
-  // ✅ SELLER GSTIN — UNCHANGED (AS REQUESTED)
+  // ✅ SELLER GSTIN — UNTOUCHED
   const gstin = seller.GSTIN || "GSTIN Not Available";
 
   const sellerAddress = [
@@ -296,79 +294,91 @@ module.exports = async function generateInvoicePDF(order) {
   const igst = isInterState ? gstTotal : 0;
 
   /* ================= HEADER ================= */
-  if (fs.existsSync(brandLogo)) {
-    doc.image(brandLogo, 40, 30, { width: 55 });
-  }
+  let y = 40;
 
-  doc.font("Helvetica-Bold").fontSize(13).fillColor(MAROON)
-    .text(BRAND_NAME, 110, 35);
+  doc.font("Helvetica-Bold").fontSize(14).fillColor(MAROON)
+    .text(BRAND_NAME, 40, y);
+
+  y += 18;
 
   doc.font("Helvetica").fontSize(9).fillColor(LIGHT)
-    .text(BRAND_WEBSITE, 110, 55);
+    .text(BRAND_WEBSITE, 40, y);
 
-  doc.fontSize(18).font("Helvetica-Bold").fillColor(DARK)
-    .text("TAX INVOICE", 0, 90, { align: "center" });
+  y += 30;
 
-  /* ================= SELLER DETAILS ================= */
-  doc.fontSize(12).font("Helvetica-Bold").fillColor(DARK)
-    .text(sellerName, 40, 120);
+  doc.font("Helvetica-Bold").fontSize(18).fillColor(DARK)
+    .text("TAX INVOICE", 0, y, { align: "center" });
 
-  doc.fontSize(9).font("Helvetica").fillColor(LIGHT)
-    .text(`Address: ${sellerAddress || "NA"}`)
+  y += 40;
+
+  /* ================= SELLER LEFT ================= */
+  doc.font("Helvetica-Bold").fontSize(11).fillColor(DARK)
+    .text(sellerName, 40, y);
+
+  y += 15;
+
+  doc.font("Helvetica").fontSize(9).fillColor(LIGHT)
+    .text(`Address: ${sellerAddress}`)
     .text(`GSTIN: ${gstin}`)
-    .text(`State: ${addr.state || "NA"}`)
-    .text(`Email: ${sellerEmail}`)
-    .text(`Website: ${BRAND_WEBSITE}`);
+    .text(`State: ${addr.state}`)
+    .text(`Email: ${sellerEmail}`);
 
-  /* ================= BUYER ================= */
-  doc.fontSize(10).font("Helvetica-Bold").fillColor(DARK)
-    .text("Bill To:", 40, 160);
+  /* ================= BUYER RIGHT ================= */
+  let rightY = y - 45;
 
-  doc.fontSize(9).font("Helvetica").fillColor(DARK)
-    .text(buyer.name)
-    .text(buyer.address)
-    .text(`${buyer.city}, ${buyer.state} - ${buyer.pinCode}`)
-    .text(`Place of Supply: ${buyer.state}`);
+  doc.font("Helvetica-Bold").fontSize(10).fillColor(DARK)
+    .text("Bill To:", 350, rightY);
+
+  doc.font("Helvetica").fontSize(9).fillColor(DARK)
+    .text(buyer.name, 350)
+    .text(buyer.address, 350, null, { width: 200 })
+    .text(`${buyer.city}, ${buyer.state} - ${buyer.pinCode}`, 350)
+    .text(`Place of Supply: ${buyer.state}`, 350);
+
+  y += 70;
 
   /* ================= META ================= */
-  doc.fontSize(9).font("Helvetica").fillColor(DARK)
-    .text(`Invoice No: ${invoiceNo}`, 350, 160)
+  doc.fontSize(9).fillColor(DARK)
+    .text(`Invoice No: ${invoiceNo}`, 350, y)
     .text(`Invoice Date: ${new Date(order.orderDate).toLocaleDateString("en-IN")}`, 350)
     .text(`Order ID: ${order._id}`, 350)
     .text(`Payment Mode: Online`, 350)
     .text(`Payment Status: ${order.paymentStatus}`, 350)
     .text(`Reverse Charge: No`, 350);
 
-  /* ================= TABLE ================= */
-  let y = 240;
+  y += 40;
+
+  /* ================= TABLE HEADER ================= */
   doc.rect(40, y, 520, 25).fillAndStroke(BG, GOLD);
 
   doc.font("Helvetica-Bold").fontSize(9).fillColor(MAROON)
     .text("S.No", 45, y + 7)
     .text("Product", 70, y + 7)
-    .text("HSN", 250, y + 7)
-    .text("Qty", 300, y + 7)
-    .text("Taxable", 340, y + 7)
-    .text(isInterState ? "IGST 5%" : "CGST 2.5%", 400, y + 7)
-    .text(isInterState ? "" : "SGST 2.5%", 470, y + 7);
+    .text("HSN", 260, y + 7)
+    .text("Qty", 310, y + 7)
+    .text("Taxable", 350, y + 7)
+    .text(isInterState ? "IGST 5%" : "CGST 2.5%", 420, y + 7)
+    .text(isInterState ? "" : "SGST 2.5%", 480, y + 7);
 
   y += 30;
 
+  /* ================= TABLE ROWS ================= */
   order.orderItems.forEach((item, i) => {
-    doc.fontSize(9).font("Helvetica").fillColor(DARK)
+    doc.font("Helvetica").fontSize(9).fillColor(DARK)
       .text(i + 1, 45, y)
-      .text(item.product.title, 70, y, { width: 170 })
-      .text(item.product.hsn || "5007", 250, y)
-      .text(item.quantity, 300, y)
-      .text(formatINR(taxableValue), 340, y)
-      .text(formatINR(isInterState ? igst : cgst), 400, y)
-      .text(isInterState ? "" : formatINR(sgst), 470, y);
+      .text(item.product.title, 70, y, { width: 180 })
+      .text(item.product.hsn || "5007", 260, y)
+      .text(item.quantity, 310, y)
+      .text(formatINR(taxableValue), 350, y)
+      .text(formatINR(isInterState ? igst : cgst), 420, y)
+      .text(isInterState ? "" : formatINR(sgst), 480, y);
     y += 25;
   });
 
-  /* ================= TOTAL ================= */
   y += 10;
-  doc.fontSize(10).font("Helvetica-Bold").fillColor(DARK)
+
+  /* ================= TOTALS ================= */
+  doc.font("Helvetica-Bold").fontSize(10).fillColor(DARK)
     .text(`Taxable Amount: ${formatINR(taxableValue)}`, 350, y);
 
   if (isInterState) {
@@ -382,7 +392,7 @@ module.exports = async function generateInvoicePDF(order) {
 
   /* ================= WORDS ================= */
   doc.fontSize(9).font("Helvetica").fillColor(DARK)
-    .text(`Amount in Words: ${numberToWords(grandTotal)}`, 40, y + 50);
+    .text(`Amount in Words: ${numberToWords(grandTotal)}`, 40, y + 60);
 
   /* ================= DECLARATION ================= */
   doc.fontSize(8).fillColor(LIGHT)
@@ -398,15 +408,6 @@ module.exports = async function generateInvoicePDF(order) {
     .text(`For ${sellerName}`, 380, y + 120);
 
   doc.fontSize(8).text("Authorized Signatory", 380, y + 135);
-
-  /* ================= FOOTER ================= */
-  doc.fontSize(8).fillColor(LIGHT)
-    .text(
-      "This is a system-generated invoice. Thank you for shopping with Swastik.",
-      40,
-      800,
-      { width: 520, align: "center" }
-    );
 
   /* ================= QR ================= */
   const qr = await QRCode.toDataURL(`https://swastik.com/order/${order._id}`);
