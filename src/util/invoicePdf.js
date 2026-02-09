@@ -229,10 +229,6 @@
 
 
 
-
-
-
-
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
@@ -275,10 +271,6 @@ module.exports = async function generateInvoicePDF(order) {
   const doc = new PDFDocument({ size: "A4", margin: 40 });
   doc.pipe(fs.createWriteStream(filePath));
 
-  /* ================= FONTS (₹ FIX) ================= */
-  doc.registerFont("Regular", path.join(__dirname, "../assets/fonts/Roboto-Regular.ttf"));
-  doc.registerFont("Bold", path.join(__dirname, "../assets/fonts/Roboto-Bold.ttf"));
-
   const GOLD = "#B08D57";
   const DARK = "#222";
   const LIGHT = "#666";
@@ -314,48 +306,51 @@ module.exports = async function generateInvoicePDF(order) {
   const igst = isInterState ? gstTotal : 0;
 
   /* ================= BRAND HEADER ================= */
-  const brandLogo = path.join(__dirname, "../assets/Swastik-perfect-logo.png");
+  const logoPath = path.join(__dirname, "../assets/Swastik-perfect-logo.png");
   const BRAND_GSTIN = "22ABCDE1234F1Z5";
 
-  doc.image(brandLogo, 40, 38, { width: 38 });
+  if (fs.existsSync(logoPath)) {
+    doc.image(logoPath, 40, 38, { width: 40 });
+  }
 
-  doc.font("Bold").fontSize(14).text("SWASTIK HANDLOOM", 90, 42);
+  doc.font("Helvetica-Bold").fontSize(14).text("SWASTIK HANDLOOM", 95, 42);
 
-  doc.font("Bold")
-    .fontSize(9)
+  doc.fontSize(9)
+    .font("Helvetica-Bold")
     .text(`GSTIN: ${BRAND_GSTIN}`, 380, 42, { align: "right" });
 
   doc.moveDown(1);
-
-  doc.font("Bold").fontSize(18).text("TAX INVOICE", { align: "center" });
+  doc.fontSize(18).font("Helvetica-Bold").text("TAX INVOICE", { align: "center" });
 
   /* ================= SELLER DETAILS ================= */
-  doc.font("Bold").fontSize(10).text("Seller Details:", 40, 75);
+  doc.fontSize(10).font("Helvetica-Bold").text("Seller Details:", 40, 75);
   doc.moveDown(0.3);
 
-  doc.font("Bold").fontSize(12).text(sellerName, 40);
-  doc.font("Regular").fontSize(9)
-    .text(`Address: ${sellerAddress || "NA"}`)
+  doc.fontSize(12).font("Helvetica-Bold").text(sellerName, 40);
+  doc.fontSize(9).font("Helvetica")
+    .text(`Address: ${sellerAddress}`)
     .text(`GSTIN: ${gstin}`)
     .text(`State: ${addr.state || "NA"}`)
     .text(`Email: ${sellerEmail}`);
 
   /* ================= WATERMARK ================= */
-  doc.save();
-  doc.opacity(0.06);
-  doc.image(brandLogo, 150, 260, { width: 300 });
-  doc.restore();
+  if (fs.existsSync(logoPath)) {
+    doc.save();
+    doc.opacity(0.05);
+    doc.image(logoPath, 150, 260, { width: 300 });
+    doc.restore();
+  }
 
   /* ================= BUYER ================= */
-  doc.font("Bold").fontSize(10).text("Bill To:", 40, 150);
-  doc.font("Regular").fontSize(9)
+  doc.fontSize(10).font("Helvetica-Bold").text("Bill To:", 40, 150);
+  doc.fontSize(9).font("Helvetica")
     .text(buyer.name)
     .text(buyer.address)
     .text(`${buyer.city}, ${buyer.state} - ${buyer.pinCode}`)
     .text(`Place of Supply: ${buyer.state}`);
 
   /* ================= META ================= */
-  doc.font("Regular").fontSize(9)
+  doc.fontSize(9).font("Helvetica")
     .text(`Invoice No: ${invoiceNo}`, 350, 150)
     .text(`Invoice Date: ${new Date(order.orderDate).toLocaleDateString("en-IN")}`, 350)
     .text(`Order ID: ${order._id}`, 350)
@@ -367,7 +362,7 @@ module.exports = async function generateInvoicePDF(order) {
   let y = 230;
   doc.rect(40, y, 520, 25).stroke(GOLD);
 
-  doc.font("Bold").fontSize(9).fillColor(GOLD)
+  doc.font("Helvetica-Bold").fontSize(9).fillColor(GOLD)
     .text("S.No", 45, y + 7)
     .text("Product", 70, y + 7)
     .text("HSN", 250, y + 7)
@@ -379,32 +374,33 @@ module.exports = async function generateInvoicePDF(order) {
   y += 30;
 
   order.orderItems.forEach((item, i) => {
-    doc.font("Regular").fontSize(9).fillColor(DARK)
+    doc.font("Helvetica").fontSize(9).fillColor(DARK)
       .text(i + 1, 45, y)
       .text(item.product.title, 70, y, { width: 170 })
       .text(item.product.hsn || "5007", 250, y)
       .text(item.quantity, 300, y)
-      .text(`₹ ${taxableValue}`, 340, y)
-      .text(`₹ ${(isInterState ? igst : cgst).toFixed(2)}`, 400, y)
-      .text(isInterState ? "" : `₹ ${sgst.toFixed(2)}`, 470, y);
+      .text(`Rs. ${taxableValue}`, 340, y)
+      .text(`Rs. ${(isInterState ? igst : cgst).toFixed(2)}`, 400, y)
+      .text(isInterState ? "" : `Rs. ${sgst.toFixed(2)}`, 470, y);
     y += 25;
   });
 
   /* ================= TOTAL ================= */
   y += 10;
-  doc.font("Bold").fontSize(10).text(`Taxable Amount: ₹ ${taxableValue}`, 350, y);
+  doc.fontSize(10).font("Helvetica-Bold")
+    .text(`Taxable Amount: Rs. ${taxableValue}`, 350, y);
 
   if (isInterState) {
-    doc.text(`IGST @5%: ₹ ${igst.toFixed(2)}`, 350, y + 15);
+    doc.text(`IGST @5%: Rs. ${igst.toFixed(2)}`, 350, y + 15);
   } else {
-    doc.text(`CGST @2.5%: ₹ ${cgst.toFixed(2)}`, 350, y + 15);
-    doc.text(`SGST @2.5%: ₹ ${sgst.toFixed(2)}`, 350, y + 30);
+    doc.text(`CGST @2.5%: Rs. ${cgst.toFixed(2)}`, 350, y + 15);
+    doc.text(`SGST @2.5%: Rs. ${sgst.toFixed(2)}`, 350, y + 30);
   }
 
-  doc.text(`Grand Total: ₹ ${grandTotal}`, 350, y + 50);
+  doc.text(`Grand Total: Rs. ${grandTotal}`, 350, y + 50);
 
   /* ================= WORDS ================= */
-  doc.font("Regular").fontSize(9)
+  doc.fontSize(9).font("Helvetica")
     .text(`Amount in Words: ${numberToWords(grandTotal)}`, 40, y + 50);
 
   /* ================= DECLARATION ================= */
@@ -415,8 +411,7 @@ module.exports = async function generateInvoicePDF(order) {
     );
 
   /* ================= SIGN ================= */
-  doc.font("Bold").fontSize(9).fillColor(DARK)
-    .text(`For ${sellerName}`, 380, y + 120);
+  doc.font("Helvetica-Bold").text(`For ${sellerName}`, 380, y + 120);
   doc.fontSize(8).text("Authorized Signatory", 380, y + 135);
 
   /* ================= QR ================= */
