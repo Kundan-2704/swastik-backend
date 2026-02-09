@@ -91,10 +91,39 @@ const sgst = isInterState ? 0 : gstTotal / 2;
 const igst = isInterState ? gstTotal : 0;
 
 
+/* ================= BRAND HEADER ================= */
+const brandLogo = path.join(__dirname, "../assets/Swastik-perfect-logo.png");
+
+const BRAND_GSTIN = "22ABCDE1234F1Z5"; // your Swastik GSTIN
+
+
+doc.image(brandLogo, 40, 35, { width: 50 });
+
+doc.font("Helvetica-Bold")
+  .fontSize(14)
+  .text("SWASTIK HANDLOOM", 100, 45);
+
+
+  doc.fontSize(9)
+  .font("Helvetica-Bold")
+  .text(`GSTIN: ${BRAND_GSTIN}`, 380, 45, { align: "right" });
+
+
   /* ================= HEADER ================= */
   doc.fontSize(18).font("Helvetica-Bold").text("TAX INVOICE", { align: "center" });
 
-  doc.fontSize(12).font("Helvetica-Bold").text(sellerName, 40, 70);
+  // doc.fontSize(12).font("Helvetica-Bold").text(sellerName, 40, 70);
+
+  doc.fontSize(10)
+  .font("Helvetica-Bold")
+  .text("Seller Details:", 40, 75);
+
+doc.moveDown(0.3);
+
+doc.fontSize(12)
+  .font("Helvetica-Bold")
+  .text(sellerName, 40);
+
 
   doc.fontSize(9).font("Helvetica")
     .text(`Address: ${sellerAddress || "NA"}`)
