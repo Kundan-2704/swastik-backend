@@ -16,7 +16,7 @@ class PaymentService {
   ====================================== */
   async createOrder(user, orders) {
     const amount = orders.reduce(
-      (sum, order) => sum + order.totalSellingPrice,
+      (sum, order) => sum + order.finalAmount,
       0
     );
 
@@ -111,7 +111,7 @@ class PaymentService {
       });
     }
 
-    const amount = order.totalSellingPrice;
+    const amount = order.finalAmount;
 
     wallet.totalEarnings += amount;
     wallet.holdBalance += amount; // hold till return window
@@ -131,8 +131,8 @@ class PaymentService {
     const wallet = await SellerWallet.findOne({ seller: order.seller });
     if (!wallet) return;
 
-    wallet.holdBalance -= order.totalSellingPrice;
-    wallet.availableBalance += order.totalSellingPrice;
+    wallet.holdBalance -= order.finalAmount;
+    wallet.availableBalance += order.finalAmount;
     await wallet.save();
   }
 

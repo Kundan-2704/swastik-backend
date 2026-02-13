@@ -370,13 +370,18 @@ class OrderService {
           orderItems: [],
 
           totalMrpPrice,
-          totalSellingPrice: finalPayable,
-           shippingCharge, // ✅ FINAL PAYABLE
+          totalSellingPrice,
+
           discount:
-            (totalMrpPrice - totalSellingPrice) + sellerCouponDiscount,
+            (totalMrpPrice - totalSellingPrice) ,
 
           couponCode,
           couponDiscount: sellerCouponDiscount,
+
+           shippingCharge, // ✅ FINAL PAYABLE
+
+
+          finalAmount: finalPayable,
 
           totalItem,
           paymentMethod,

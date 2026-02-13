@@ -320,6 +320,9 @@ const ReplacementRoutes = require("./routers/ReplacementRoutes.js");
 
 const ReviewRoutes = require("./routers/ReviewRoutes.js")
 
+
+const aiAgentRoutes = require("./ai-agent/routes/AIAgentRoutes.js");
+
 /* ================= MOUNTS ================= */
 
 app.use("/auth", authRoutes);
@@ -369,6 +372,8 @@ app.use("/api", invoiceRoutes);
 app.use("/api/replacements", ReplacementRoutes);
 
 app.use("/api/reviews", ReviewRoutes);
+
+app.use("/api/ai-agent", aiAgentRoutes);
 
 /* ================= SERVER ================= */
 

@@ -107,66 +107,66 @@ const calculatedDiscountPercentage =
 
 class CartService {
 
-  async findUserCart(userOrUserId) {
-  try {
-    const userId =
-      typeof userOrUserId === "object"
-        ? userOrUserId._id
-        : userOrUserId;
+//   async findUserCart(userOrUserId) {
+//   try {
+//     const userId =
+//       typeof userOrUserId === "object"
+//         ? userOrUserId._id
+//         : userOrUserId;
 
-    let cart = await Cart.findOne({ user: userId });
+//     let cart = await Cart.findOne({ user: userId });
 
-    if (!cart) {
-      cart = await Cart.create({
-        user: userId,
-        cartItems: [],
-        totalMrpPrice: 0,
-        totalSellingPrice: 0,
-        totalItem: 0,
-        discount: 0,
-      });
-    }
+//     if (!cart) {
+//       cart = await Cart.create({
+//         user: userId,
+//         cartItems: [],
+//         totalMrpPrice: 0,
+//         totalSellingPrice: 0,
+//         totalItem: 0,
+//         discount: 0,
+//       });
+//     }
 
-    const cartItems = await CartItem.find({ cart: cart._id })
-      .populate({
-        path: "product",
-        populate: {
-          path: "seller",
-          select: "_id",
-        },
-      });
+//     const cartItems = await CartItem.find({ cart: cart._id })
+//       .populate({
+//         path: "product",
+//         populate: {
+//           path: "seller",
+//           select: "_id",
+//         },
+//       });
 
-    // 🔥 FILTER BROKEN CART ITEMS
-    const validCartItems = cartItems.filter(
-      (item) => item.product && item.product.seller
-    );
+//     // 🔥 FILTER BROKEN CART ITEMS
+//     const validCartItems = cartItems.filter(
+//       (item) => item.product && item.product.seller
+//     );
 
-    cart.cartItems = validCartItems;
+//     cart.cartItems = validCartItems;
 
-    let totalMrpPrice = 0;
-    let totalSellingPrice = 0;
+//     let totalMrpPrice = 0;
+//     let totalSellingPrice = 0;
 
-    validCartItems.forEach((item) => {
-      totalMrpPrice += item.mrpPrice;
-      totalSellingPrice += item.sellingPrice;
-    });
+//     validCartItems.forEach((item) => {
+//       totalMrpPrice += item.mrpPrice;
+//       totalSellingPrice += item.sellingPrice;
+//     });
 
-    cart.totalMrpPrice = totalMrpPrice;
-    cart.totalSellingPrice = totalSellingPrice;
-    cart.totalItem = validCartItems.length;
-    cart.discount = calculatedDiscountPercentage(
-      totalMrpPrice,
-      totalSellingPrice
-    );
+//     cart.totalMrpPrice = totalMrpPrice;
+//     cart.totalSellingPrice = totalSellingPrice;
+//     cart.totalItem = validCartItems.length;
+//     cart.discount = calculatedDiscountPercentage(
+//       totalMrpPrice,
+//       totalSellingPrice
+//     );
 
-    await cart.save();
-    return cart;
+//     await cart.save();
+//     return cart;
 
-  } catch (error) {
-    console.error("🔴 CRASH INSIDE findUserCart →", error);
-    throw error;
-  }
-}
+//   } catch (error) {
+//     console.error("🔴 CRASH INSIDE findUserCart →", error);
+//     throw error;
+//   }
+// }
 
 
   // async addCartItem(userId, product, size, quantity) {
@@ -199,6 +199,79 @@ class CartService {
 
   //   return isPresent;
   // }
+
+  async findUserCart(userOrUserId) {
+  try {
+    const userId =
+      typeof userOrUserId === "object"
+        ? userOrUserId._id
+        : userOrUserId;
+
+    let cart = await Cart.findOne({ user: userId });
+
+    if (!cart) {
+      cart = await Cart.create({
+        user: userId,
+        cartItems: [],
+        totalMrpPrice: 0,
+        totalSellingPrice: 0,
+        totalItem: 0,
+        discount: 0,
+
+        /* ✅ IMPORTANT DEFAULTS */
+        couponCode: null,
+        couponDiscount: 0,
+        finalAmount: 0,
+        shippingCharge: 0,
+      });
+    }
+
+    const cartItems = await CartItem.find({ cart: cart._id })
+      .populate({
+        path: "product",
+        populate: {
+          path: "seller",
+          select: "_id",
+        },
+      });
+
+    /* 🔥 FILTER INVALID ITEMS */
+    const validCartItems = cartItems.filter(
+      (item) => item.product && item.product.seller
+    );
+
+    cart.cartItems = validCartItems;
+
+    let totalMrpPrice = 0;
+    let totalSellingPrice = 0;
+
+    validCartItems.forEach((item) => {
+      totalMrpPrice += item.mrpPrice;
+      totalSellingPrice += item.sellingPrice;
+    });
+
+    /* ✅ ALWAYS RECALCULATE BASE TOTALS */
+    cart.totalMrpPrice = totalMrpPrice;
+    cart.totalSellingPrice = totalSellingPrice;
+    cart.totalItem = validCartItems.length;
+
+   cart.discount = totalMrpPrice - totalSellingPrice;
+
+    /* ✅ PRESERVE COUPON */
+    const couponDiscount = cart.couponDiscount || 0;
+
+    /* ✅ FINAL AMOUNT (MOST IMPORTANT) */
+    cart.finalAmount =
+      totalSellingPrice - couponDiscount + (cart.shippingCharge || 0);
+
+    await cart.save();
+    return cart;
+
+  } catch (error) {
+    console.error("🔴 CRASH INSIDE findUserCart →", error);
+    throw error;
+  }
+}
 
   async addCartItem(userId, product, size = "FREE_SIZE", quantity) {
   const cart = await this.findUserCart(userId);

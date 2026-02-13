@@ -4,13 +4,15 @@
 // const QRCode = require("qrcode");
 
 // /* ================= UTILS ================= */
+
 // function numberToWords(num) {
-//   const ones = [
-//     "", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
-//     "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen",
-//     "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
-//   ];
-//   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+//   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six",
+//     "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve",
+//     "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+//     "Seventeen", "Eighteen", "Nineteen"];
+
+//   const tens = ["", "", "Twenty", "Thirty", "Forty",
+//     "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
 
 //   if (!num || num === 0) return "Zero Only";
 
@@ -27,12 +29,11 @@
 // }
 
 // /* ================= MAIN ================= */
+
 // module.exports = async function generateInvoicePDF(order) {
 
 //   const invoiceDir = path.join(process.cwd(), "invoices");
-//   if (!fs.existsSync(invoiceDir)) {
-//     fs.mkdirSync(invoiceDir, { recursive: true });
-//   }
+//   if (!fs.existsSync(invoiceDir)) fs.mkdirSync(invoiceDir, { recursive: true });
 
 //   const invoiceNo = `INV-${new Date().getFullYear()}-${order._id.toString().slice(-6)}`;
 //   const filePath = path.join(invoiceDir, `${invoiceNo}.pdf`);
@@ -42,9 +43,8 @@
 
 //   const GOLD = "#B08D57";
 //   const DARK = "#222";
-//   const LIGHT = "#666";
+//   const LIGHT = "#777";
 
-//   /* ================= SELLER ================= */
 //   const seller = order.seller;
 //   const addr = seller.pickupAddress || {};
 //   const business = seller.businessDetails || {};
@@ -54,17 +54,11 @@
 //   const gstin = seller.GSTIN || "GST Applied";
 
 //   const sellerAddress = [
-//     addr.address,
-//     addr.locality,
-//     addr.city,
-//     addr.state,
-//     addr.pinCode
+//     addr.address, addr.locality, addr.city, addr.state, addr.pinCode
 //   ].filter(Boolean).join(", ");
 
-//   /* ================= BUYER ================= */
 //   const buyer = order.shippingAddress;
 
-//   /* ================= TAX ================= */
 //   const grandTotal = order.totalSellingPrice;
 //   const taxableValue = Math.round(grandTotal / 1.05);
 //   const gstTotal = grandTotal - taxableValue;
@@ -74,118 +68,186 @@
 //   const sgst = isInterState ? 0 : gstTotal / 2;
 //   const igst = isInterState ? gstTotal : 0;
 
-//   /* ================= BRAND HEADER ================= */
 //   const logoPath = path.join(__dirname, "../assets/Swastik-perfect-logo.png");
 //   const BRAND_GSTIN = "22ABCDE1234F1Z5";
 
+//   const leftX = 40;
+//   const rightX = 300;
+//   const columnWidth = 250;
+
+//   /* ================= HEADER ================= */
+
 //   if (fs.existsSync(logoPath)) {
-//     doc.image(logoPath, 40, 38, { width: 40 });
+//     doc.image(logoPath, 40, 35, { width: 38 });
 //   }
 
-//   doc.font("Helvetica-Bold").fontSize(14).text("SWASTIK HANDLOOM", 95, 42);
+//   doc.font("Helvetica-Bold")
+//     .fontSize(16)
+//     .text("SWASTIK HANDLOOM", 90, 40);
 
 //   doc.fontSize(9)
-//     .font("Helvetica-Bold")
-//     .text(`GSTIN: ${BRAND_GSTIN}`, 380, 42, { align: "right" });
+//     .text(`GSTIN: ${BRAND_GSTIN}`, 380, 42);
+
+//   doc.moveDown(2);
+//   doc.fontSize(20)
+//     .text("TAX INVOICE", { align: "center" });
+
+//   doc.moveDown(0.8);
+
+//   doc.strokeColor("#E5E5E5")
+//     .lineWidth(1)
+//     .moveTo(40, doc.y)
+//     .lineTo(555, doc.y)
+//     .stroke();
 
 //   doc.moveDown(1);
-//   doc.fontSize(18).font("Helvetica-Bold").text("TAX INVOICE", { align: "center" });
 
-//   /* ================= SELLER DETAILS ================= */
-//   doc.fontSize(10).font("Helvetica-Bold").text("Seller Details:", 40, 75);
-//   doc.moveDown(0.3);
+//   const startY = doc.y;
 
-//   doc.fontSize(12).font("Helvetica-Bold").text(sellerName, 40);
+//   /* ================= SELLER ================= */
+
+//   doc.fontSize(10).font("Helvetica-Bold")
+//     .text("Seller Details:", leftX, startY);
+
 //   doc.fontSize(9).font("Helvetica")
-//     .text(`Address: ${sellerAddress}`)
+//     .text(sellerName, leftX, doc.y)
+//     .text(`Address: ${sellerAddress}`, { width: columnWidth })
 //     .text(`GSTIN: ${gstin}`)
 //     .text(`State: ${addr.state || "NA"}`)
 //     .text(`Email: ${sellerEmail}`);
 
-//   /* ================= WATERMARK ================= */
-//   if (fs.existsSync(logoPath)) {
-//     doc.save();
-//     doc.opacity(0.05);
-//     doc.image(logoPath, 150, 260, { width: 300 });
-//     doc.restore();
-//   }
+//   const sellerEndY = doc.y;
 
 //   /* ================= BUYER ================= */
-//   doc.fontSize(10).font("Helvetica-Bold").text("Bill To:", 40, 150);
+
+//   doc.fontSize(10).font("Helvetica-Bold")
+//     .text("Bill To:", rightX, startY);
+
 //   doc.fontSize(9).font("Helvetica")
-//     .text(buyer.name)
-//     .text(buyer.address)
+//     .text(buyer.name, rightX, doc.y)
+//     .text(buyer.address, { width: columnWidth })
 //     .text(`${buyer.city}, ${buyer.state} - ${buyer.pinCode}`)
 //     .text(`Place of Supply: ${buyer.state}`);
 
+//   const buyerEndY = doc.y;
+
+//   doc.y = Math.max(sellerEndY, buyerEndY) + 25;
+
 //   /* ================= META ================= */
+
+//   doc.font("Helvetica-Bold")
+//     .fontSize(10)
+//     .text("Invoice Details", rightX);
+
+//   doc.moveDown(0.4);
+
 //   doc.fontSize(9).font("Helvetica")
-//     .text(`Invoice No: ${invoiceNo}`, 350, 150)
-//     .text(`Invoice Date: ${new Date(order.orderDate).toLocaleDateString("en-IN")}`, 350)
-//     .text(`Order ID: ${order._id}`, 350)
-//     .text("Payment Mode: Online", 350)
-//     .text(`Payment Status: ${order.paymentStatus}`, 350)
-//     .text("Reverse Charge: No", 350);
+//     .text(`Invoice No: ${invoiceNo}`, rightX)
+//     .text(`Invoice Date: ${new Date(order.orderDate).toLocaleDateString("en-IN")}`)
+//     .text(`Order ID: ${order._id}`)
+//     .text("Payment Mode: Online")
+//     .text(`Payment Status: ${order.paymentStatus}`)
+//     .text("Reverse Charge: No");
+
+//   doc.moveDown(1.5);
 
 //   /* ================= TABLE ================= */
-//   let y = 230;
-//   doc.rect(40, y, 520, 25).stroke(GOLD);
+
+//   const tableY = doc.y;
+
+//   doc.lineWidth(1.2)
+//     .strokeColor(GOLD)
+//     .rect(40, tableY, 520, 25)
+//     .stroke();
 
 //   doc.font("Helvetica-Bold").fontSize(9).fillColor(GOLD)
-//     .text("S.No", 45, y + 7)
-//     .text("Product", 70, y + 7)
-//     .text("HSN", 250, y + 7)
-//     .text("Qty", 300, y + 7)
-//     .text("Taxable", 340, y + 7)
-//     .text(isInterState ? "IGST 5%" : "CGST 2.5%", 400, y + 7)
-//     .text(isInterState ? "" : "SGST 2.5%", 470, y + 7);
+//     .text("S.No", 50, tableY + 7)
+//     .text("Product", 90, tableY + 7)
+//     .text("HSN", 280, tableY + 7)
+//     .text("Qty", 330, tableY + 7)
+//     .text("Taxable", 370, tableY + 7)
+//     .text(isInterState ? "IGST" : "CGST", 440, tableY + 7)
+//     .text(isInterState ? "" : "SGST", 500, tableY + 7);
 
-//   y += 30;
+//   doc.y = tableY + 35;
 
 //   order.orderItems.forEach((item, i) => {
+//     const rowY = doc.y;
+
 //     doc.font("Helvetica").fontSize(9).fillColor(DARK)
-//       .text(i + 1, 45, y)
-//       .text(item.product.title, 70, y, { width: 170 })
-//       .text(item.product.hsn || "5007", 250, y)
-//       .text(item.quantity, 300, y)
-//       .text(`Rs. ${taxableValue}`, 340, y)
-//       .text(`Rs. ${(isInterState ? igst : cgst).toFixed(2)}`, 400, y)
-//       .text(isInterState ? "" : `Rs. ${sgst.toFixed(2)}`, 470, y);
-//     y += 25;
+//       .text(i + 1, 50, rowY)
+//       .text(item.product.title, 90, rowY, { width: 180 })
+//       .text(item.product.hsn || "5007", 280, rowY)
+//       .text(item.quantity, 330, rowY)
+//       .text(`Rs. ${taxableValue}`, 370, rowY)
+//       .text(`Rs. ${(isInterState ? igst : cgst).toFixed(2)}`, 440, rowY)
+//       .text(isInterState ? "" : `Rs. ${sgst.toFixed(2)}`, 500, rowY);
+
+//     doc.moveDown(1.5);
+
+//     doc.strokeColor("#F2F2F2")
+//       .lineWidth(0.6)
+//       .moveTo(40, doc.y)
+//       .lineTo(555, doc.y)
+//       .stroke();
 //   });
 
-//   /* ================= TOTAL ================= */
-//   y += 10;
-//   doc.fontSize(10).font("Helvetica-Bold")
-//     .text(`Taxable Amount: Rs. ${taxableValue}`, 350, y);
+//   doc.moveDown(1.5);
+
+//   /* ================= TOTALS ================= */
+
+//   const totalsY = doc.y;
+
+//   doc.roundedRect(rightX - 10, totalsY - 8, 200, 90, 6)
+//     .stroke("#EEEEEE");
+
+//   doc.font("Helvetica-Bold").fontSize(10)
+//     .text(`Taxable Amount: Rs. ${taxableValue}`, rightX);
 
 //   if (isInterState) {
-//     doc.text(`IGST @5%: Rs. ${igst.toFixed(2)}`, 350, y + 15);
+//     doc.text(`IGST @5%: Rs. ${igst.toFixed(2)}`, rightX);
 //   } else {
-//     doc.text(`CGST @2.5%: Rs. ${cgst.toFixed(2)}`, 350, y + 15);
-//     doc.text(`SGST @2.5%: Rs. ${sgst.toFixed(2)}`, 350, y + 30);
+//     doc.text(`CGST @2.5%: Rs. ${cgst.toFixed(2)}`, rightX);
+//     doc.text(`SGST @2.5%: Rs. ${sgst.toFixed(2)}`, rightX);
 //   }
 
-//   doc.text(`Grand Total: Rs. ${grandTotal}`, 350, y + 50);
+//   doc.moveDown(0.5);
+
+//   doc.fontSize(14)
+//     .fillColor("#000")
+//     .text(`Grand Total: Rs. ${grandTotal}`, rightX);
 
 //   /* ================= WORDS ================= */
-//   doc.fontSize(9).font("Helvetica")
-//     .text(`Amount in Words: ${numberToWords(grandTotal)}`, 40, y + 50);
+
+//   doc.font("Helvetica").fontSize(9).fillColor(DARK)
+//     .text(`Amount in Words: ${numberToWords(grandTotal)}`, leftX, totalsY + 55, {
+//       width: 260
+//     });
+
+//   doc.moveDown(3);
 
 //   /* ================= DECLARATION ================= */
+
 //   doc.fontSize(8).fillColor(LIGHT)
 //     .text(
 //       "Declaration: We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.",
-//       40, y + 90, { width: 520 }
+//       40, doc.y, { width: 520 }
 //     );
 
-//   /* ================= SIGN ================= */
-//   doc.font("Helvetica-Bold").text(`For ${sellerName}`, 380, y + 120);
-//   doc.fontSize(8).text("Authorized Signatory", 380, y + 135);
+//   doc.moveDown(2.2);
+
+//   /* ================= SIGNATURE ================= */
+
+//   doc.fontSize(10).font("Helvetica-Bold")
+//     .text(`For ${sellerName}`, rightX);
+
+//   doc.fontSize(8)
+//     .text("Authorized Signatory");
 
 //   /* ================= QR ================= */
+
 //   const qr = await QRCode.toDataURL(`https://swastik.com/order/${order._id}`);
-//   doc.image(qr, 40, y + 120, { width: 90 });
+//   doc.image(qr, 40, doc.y - 35, { width: 85 });
 
 //   doc.end();
 
@@ -201,12 +263,13 @@
 
 
 
-
-
+require("dotenv").config();
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 const QRCode = require("qrcode");
+
+/* ================= UTILS ================= */
 
 function numberToWords(num) {
   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six",
@@ -231,6 +294,8 @@ function numberToWords(num) {
   return convert(num).replace(/\s+/g, " ").trim() + " Only";
 }
 
+/* ================= MAIN ================= */
+
 module.exports = async function generateInvoicePDF(order) {
 
   const invoiceDir = path.join(process.cwd(), "invoices");
@@ -242,9 +307,18 @@ module.exports = async function generateInvoicePDF(order) {
   const doc = new PDFDocument({ size: "A4", margin: 40 });
   doc.pipe(fs.createWriteStream(filePath));
 
+  /* ================= COLORS ================= */
+
   const GOLD = "#B08D57";
-  const DARK = "#222";
-  const LIGHT = "#666";
+  const DARK = "#1A1A1A";
+  const LIGHT = "#777";
+  const BORDER = "#EAEAEA";
+  const RED = "#C0392B";
+  const GREEN = "#1E8449";
+
+  const leftX = 40;
+  const rightX = 320;
+  const pageWidth = 520;
 
   const seller = order.seller;
   const addr = seller.pickupAddress || {};
@@ -260,9 +334,19 @@ module.exports = async function generateInvoicePDF(order) {
 
   const buyer = order.shippingAddress;
 
-  const grandTotal = order.totalSellingPrice;
-  const taxableValue = Math.round(grandTotal / 1.05);
-  const gstTotal = grandTotal - taxableValue;
+  /* ================= PRICING ================= */
+
+  const mrpTotal = order.totalMrpPrice;
+  const sellingTotal = order.totalSellingPrice;
+  const couponDiscount = order.couponDiscount || 0;
+  const finalAmount = order.finalAmount;
+
+  const couponCode = order.couponCode || "";
+  const productDiscount = mrpTotal - sellingTotal;
+  const totalSavings = mrpTotal - finalAmount;
+
+  const taxableValue = Math.round(finalAmount / 1.05);
+  const gstTotal = finalAmount - taxableValue;
 
   const isInterState = addr.state && buyer.state && addr.state !== buyer.state;
   const cgst = isInterState ? 0 : gstTotal / 2;
@@ -270,129 +354,198 @@ module.exports = async function generateInvoicePDF(order) {
   const igst = isInterState ? gstTotal : 0;
 
   const logoPath = path.join(__dirname, "../assets/Swastik-perfect-logo.png");
-  const BRAND_GSTIN = "22ABCDE1234F1Z5";
+  const BRAND_NAME = process.env.BRAND_NAME || "SWASTIK HANDLOOM";
+  const BRAND_GSTIN = process.env.BRAND_GSTIN || "GSTIN NOT SET";
+  const BRAND_WEBSITE = process.env.BRAND_WEBSITE || "";
 
   /* ================= HEADER ================= */
 
   if (fs.existsSync(logoPath)) {
-    doc.image(logoPath, 40, 30, { width: 45 });
+    doc.image(logoPath, leftX, 35, { width: 42 });
   }
 
-  doc.font("Helvetica-Bold")
-    .fontSize(16)
-    .text("SWASTIK HANDLOOM", 95, 35);
+  doc.font("Helvetica-Bold").fontSize(18)
+    .fillColor(DARK)
+    .text(BRAND_NAME, 95, 42);
 
-  doc.fontSize(9)
-    .text(`GSTIN: ${BRAND_GSTIN}`, 400, 38);
+  doc.fontSize(9).fillColor(LIGHT)
+    .text(`GSTIN: ${BRAND_GSTIN}`, 400, 45);
 
-  doc.moveDown(2);
-  doc.fontSize(20).text("TAX INVOICE", { align: "center" });
+  doc.moveDown(2.2);
+
+  doc.fontSize(20).font("Helvetica-Bold")
+    .text("TAX INVOICE", { align: "center" });
+
+  doc.moveDown(0.8);
+
+  doc.strokeColor(GOLD)
+    .lineWidth(1.3)
+    .moveTo(leftX, doc.y)
+    .lineTo(555, doc.y)
+    .stroke();
+
+  doc.moveDown(1.2);
 
   /* ================= SELLER / BUYER ================= */
 
-  let y = 110;
+  const startY = doc.y;
 
-  doc.fontSize(10).font("Helvetica-Bold").text("Seller Details:", 40, y);
+  doc.fontSize(10).font("Helvetica-Bold")
+    .text("Seller Details", leftX, startY);
+
   doc.fontSize(9).font("Helvetica")
-    .text(sellerName, 40, y + 15)
-    .text(`Address: ${sellerAddress}`)
+    .text(sellerName)
+    .text(sellerAddress, { width: 240 })
     .text(`GSTIN: ${gstin}`)
-    .text(`State: ${addr.state || "NA"}`)
     .text(`Email: ${sellerEmail}`);
 
-  doc.fontSize(10).font("Helvetica-Bold").text("Bill To:", 300, y);
+  const sellerEndY = doc.y;
+
+  doc.fontSize(10).font("Helvetica-Bold")
+    .text("Bill To", rightX, startY);
+
   doc.fontSize(9).font("Helvetica")
-    .text(buyer.name, 300, y + 15)
-    .text(buyer.address)
-    .text(`${buyer.city}, ${buyer.state} - ${buyer.pinCode}`)
-    .text(`Place of Supply: ${buyer.state}`);
+    .text(buyer.name, rightX)
+    .text(buyer.address, { width: 240 })
+    .text(`${buyer.city}, ${buyer.state} - ${buyer.pinCode}`);
 
-  /* ================= META ================= */
+  const buyerEndY = doc.y;
 
-  y = 185;
-
-  doc.fontSize(9)
-    .text(`Invoice No: ${invoiceNo}`, 300, y)
-    .text(`Invoice Date: ${new Date(order.orderDate).toLocaleDateString("en-IN")}`, 300)
-    .text(`Order ID: ${order._id}`, 300)
-    .text("Payment Mode: Online", 300)
-    .text(`Payment Status: ${order.paymentStatus}`, 300)
-    .text("Reverse Charge: No", 300);
+  doc.y = Math.max(sellerEndY, buyerEndY) + 28;
 
   /* ================= TABLE ================= */
 
-  y = 240;
+  const tableY = doc.y;
 
-  doc.rect(40, y, 520, 25).stroke(GOLD);
+  doc.roundedRect(leftX, tableY, pageWidth, 26, 4)
+    .stroke(GOLD);
 
   doc.font("Helvetica-Bold").fontSize(9).fillColor(GOLD)
-    .text("S.No", 50, y + 7)
-    .text("Product", 90, y + 7)
-    .text("HSN", 280, y + 7)
-    .text("Qty", 330, y + 7)
-    .text("Taxable", 370, y + 7)
-    .text(isInterState ? "IGST 5%" : "CGST", 440, y + 7)
-    .text(isInterState ? "" : "SGST", 500, y + 7);
+    .text("S.No", 55, tableY + 8)
+    .text("Product", 95, tableY + 8)
+    .text("HSN", 300, tableY + 8)
+    .text("Qty", 350, tableY + 8)
+    .text("Amount", 410, tableY + 8);
 
-  y += 35;
+  doc.y = tableY + 38;
 
   order.orderItems.forEach((item, i) => {
-    doc.font("Helvetica").fontSize(9).fillColor(DARK)
-      .text(i + 1, 50, y)
-      .text(item.product.title, 90, y, { width: 180 })
-      .text(item.product.hsn || "5007", 280, y)
-      .text(item.quantity, 330, y)
-      .text(`Rs. ${taxableValue}`, 370, y)
-      .text(`Rs. ${(isInterState ? igst : cgst).toFixed(2)}`, 440, y)
-      .text(isInterState ? "" : `Rs. ${sgst.toFixed(2)}`, 500, y);
 
-    y += 30;
+    const rowY = doc.y;
+
+    doc.font("Helvetica").fontSize(9).fillColor(DARK)
+      .text(i + 1, 55, rowY)
+      .text(item.product.title, 95, rowY, { width: 190 })
+      .text(item.product.hsn || "5007", 300, rowY)
+      .text(item.quantity, 350, rowY)
+      .text(`Rs. ${finalAmount}`, 410, rowY);
+
+    doc.moveDown(1.6);
+
+    doc.strokeColor(BORDER)
+      .moveTo(leftX, doc.y)
+      .lineTo(555, doc.y)
+      .stroke();
   });
+
+  doc.moveDown(1.6);
 
   /* ================= TOTALS ================= */
 
-  y += 10;
+  const totalsStartY = doc.y;
 
-  doc.font("Helvetica-Bold").fontSize(10)
-    .text(`Taxable Amount: Rs. ${taxableValue}`, 370, y);
+  doc.roundedRect(rightX - 15, totalsStartY, 250, 140, 10)
+    .stroke(BORDER);
 
-  if (isInterState) {
-    doc.text(`IGST @5%: Rs. ${igst.toFixed(2)}`, 370, y + 18);
-  } else {
-    doc.text(`CGST @2.5%: Rs. ${cgst.toFixed(2)}`, 370, y + 18);
-    doc.text(`SGST @2.5%: Rs. ${sgst.toFixed(2)}`, 370, y + 36);
+  doc.font("Helvetica-Bold").fontSize(10).fillColor(DARK)
+    .text(`Subtotal (MRP): Rs. ${mrpTotal}`, rightX, totalsStartY + 12);
+
+  if (productDiscount > 0) {
+    doc.font("Helvetica").fillColor(RED)
+      .text(`Product Discount: - Rs. ${productDiscount}`, rightX);
   }
 
-  doc.fontSize(12)
-    .text(`Grand Total: Rs. ${grandTotal}`, 370, y + 65);
+  if (couponDiscount > 0) {
+    doc.text(`Coupon Discount ${couponCode ? "(" + couponCode + ")" : ""}: - Rs. ${couponDiscount}`, rightX);
+  }
+
+  doc.fillColor(DARK);
+
+  doc.font("Helvetica-Bold")
+    .text(`Taxable Amount: Rs. ${taxableValue}`, rightX);
+
+  doc.font("Helvetica")
+    .text(isInterState
+      ? `IGST @5%: Rs. ${igst.toFixed(2)}`
+      : `CGST @2.5%: Rs. ${cgst.toFixed(2)}`
+    , rightX);
+
+  if (!isInterState) {
+    doc.text(`SGST @2.5%: Rs. ${sgst.toFixed(2)}`, rightX);
+  }
+
+  doc.moveDown(0.4);
+
+  doc.fontSize(15).font("Helvetica-Bold")
+    .text(`Grand Total: Rs. ${finalAmount}`, rightX);
+
+  /* ✅ CRITICAL FIX — MOVE BELOW TOTALS BOX */
+
+  doc.y = totalsStartY + 160;
+
+  /* ================= YOU SAVED ================= */
+
+  if (totalSavings > 0) {
+    doc.roundedRect(leftX, doc.y, 210, 32, 8)
+      .fill(GREEN);
+
+    doc.fillColor("#FFF").fontSize(10).font("Helvetica-Bold")
+      .text(`Congratulations! You Saved Rs. ${totalSavings}`, leftX + 18, doc.y + 9);
+
+    doc.moveDown(2.5);
+  }
 
   /* ================= WORDS ================= */
 
-  doc.font("Helvetica").fontSize(9)
-    .text(`Amount in Words: ${numberToWords(grandTotal)}`, 40, y + 65);
+  doc.fillColor(DARK).fontSize(9)
+    .text(`Amount in Words: ${numberToWords(finalAmount)}`);
+
+  doc.moveDown(1.5);
 
   /* ================= DECLARATION ================= */
 
   doc.fontSize(8).fillColor(LIGHT)
     .text(
       "Declaration: We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.",
-      40, y + 105, { width: 520 }
+      leftX, doc.y, { width: pageWidth }
     );
+
+  doc.moveDown(2);
+
+  if (BRAND_WEBSITE) {
+  doc.moveDown(1);
+  doc.fontSize(8).fillColor("#777")
+    .text(BRAND_WEBSITE, { align: "center" });
+}
 
   /* ================= SIGNATURE ================= */
 
-  doc.fontSize(10).font("Helvetica-Bold")
-    .text(`For ${sellerName}`, 370, y + 140);
+  doc.fontSize(10).fillColor(DARK).font("Helvetica-Bold")
+    .text(`For ${sellerName}`, rightX);
 
-  doc.fontSize(8)
-    .text("Authorized Signatory", 370, y + 158);
+  doc.fontSize(8).font("Helvetica")
+    .text("Authorized Signatory");
 
   /* ================= QR ================= */
 
-  const qr = await QRCode.toDataURL(`https://swastik.com/order/${order._id}`);
-  doc.image(qr, 40, y + 135, { width: 90 });
+  const qr = await QRCode.toDataURL(`https://swastik-frontend-phi.vercel.app/order/${order._id}`);
+  doc.image(qr, leftX, doc.y - 10, { width: 85 });
 
   doc.end();
 
-  return { invoiceNo, filePath, url: `/invoices/${invoiceNo}.pdf` };
+  return {
+    invoiceNo,
+    filePath,
+    url: `/invoices/${invoiceNo}.pdf`
+  };
 };

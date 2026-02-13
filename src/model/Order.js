@@ -95,6 +95,11 @@ const orderSchema = new mongoose.Schema({
     required: true
   },
 
+  finalAmount: {
+  type: Number,
+  required: true
+},
+
   discount: Number,
 
   totalItem: {

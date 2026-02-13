@@ -61,11 +61,11 @@ async createRazorpayOrder(req, res) {
   try {
     const cart = await Cart.findOne({ user: req.user._id });
 
-    if (!cart || !cart.totalSellingPrice) {
+    if (!cart || !cart.finalAmount ) {
       return res.status(400).json({ message: "Cart empty" });
     }
 
-    const amount = Math.round(cart.totalSellingPrice * 100);
+    const amount = Math.round(cart.finalAmount  * 100);
 
     const razorpayOrder = await razorpay.orders.create({
       amount,
