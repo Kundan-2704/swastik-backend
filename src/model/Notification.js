@@ -4,47 +4,56 @@
 //   {
 //     userId: {
 //       type: mongoose.Schema.Types.ObjectId,
-//       required: true,
 //       ref: "User",
+//       required: function () {
+//         return this.role !== "admin";
+//       },
 //     },
+
 //     role: {
 //       type: String,
 //       enum: ["admin", "seller", "customer"],
 //       required: true,
 //     },
-//     title: String,
-//     message: String,
+
+//     title: {
+//       type: String,
+//       required: true,
+//     },
+
+//     message: {
+//       type: String,
+//       required: true,
+//     },
+
 //     type: String,
-//     data: Object,
+
 //     isRead: {
 //       type: Boolean,
 //       default: false,
 //     },
+//     link: {
+//   type: String
+// },
+
 //   },
 //   { timestamps: true }
 // );
 
-// /* 🔥 FINAL SAFETY NET (MOST IMPORTANT) */
+// /* 🔥 ROLE NORMALIZATION */
 // notificationSchema.pre("validate", function (next) {
 //   if (!this.role) return next();
 
-//   // normalize anything → enum safe
-//   const role = this.role.toString().toLowerCase();
+//   const r = this.role.toLowerCase();
 
-//   if (role.includes("admin")) this.role = "admin";
-//   else if (role.includes("seller")) this.role = "seller";
-//   else if (role.includes("customer")) this.role = "customer";
+//   if (r.includes("admin")) this.role = "admin";
+//   else if (r.includes("seller")) this.role = "seller";
 //   else this.role = "customer";
 
 //   next();
 // });
 
 // module.exports = mongoose.model("Notification", notificationSchema);
-
-
-
-
-
 
 
 
@@ -58,9 +67,11 @@ const notificationSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: function () {
-        return this.role !== "admin";
-      },
+    },
+
+    sellerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Seller",
     },
 
     role: {
@@ -85,10 +96,8 @@ const notificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    link: {
-  type: String
-},
 
+    link: String,
   },
   { timestamps: true }
 );
@@ -102,6 +111,20 @@ notificationSchema.pre("validate", function (next) {
   if (r.includes("admin")) this.role = "admin";
   else if (r.includes("seller")) this.role = "seller";
   else this.role = "customer";
+
+  next();
+});
+
+/* ✅ SAFE VALIDATION */
+notificationSchema.pre("validate", function (next) {
+
+  if (this.role === "customer" && !this.userId) {
+    return next(new Error("Customer notification needs userId"));
+  }
+
+  if (this.role === "seller" && !this.sellerId) {
+    return next(new Error("Seller notification needs sellerId"));
+  }
 
   next();
 });

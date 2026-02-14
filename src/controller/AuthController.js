@@ -167,128 +167,47 @@ async  googleSignup(req, res) {
 
 
   /* ================= GOOGLE LOGIN ================= */
-// async googleLogin(req, res) {
-//   try {
-//     const { idToken } = req.body;
-
-//     const decoded = await admin.auth().verifyIdToken(idToken);
-//     const { email } = decoded;
-
-//     const user =
-//       await UserService.findUserByEmail(email).catch(() => null) ||
-//       await SellerService.findSellerByEmail(email).catch(() => null);
-
-//     if (!user) {
-//       return res.status(404).json({
-//         message: "Account not found. Please signup first.",
-//       });
-//     }
-
-//     const token = jwtProvider.createJwt({ email });
-
-//     res.status(200).json({
-//       token,
-//       user,
-//     });
-//   } catch (error) {
-//     console.error("googleLogin error:", error);
-//     res.status(401).json({ message: "Google login failed" });
-//   }
-// }
-
 
 
 // async googleLogin(req, res) {
 //   try {
 //     const { idToken } = req.body;
 
-//     if (!idToken) {
-//       return res.status(400).json({ message: "Id token required" });
-//     }
+//     if (!idToken) return res.status(400).json({ message: "Id token required" });
 
 //     const decoded = await admin.auth().verifyIdToken(idToken);
 //     const { email } = decoded;
 
 //     const user = await User.findOne({ email });
-
 //     if (!user) {
-//       return res.status(404).json({
-//         message: "Account not found. Please signup first.",
-//       });
+//       return res.status(404).json({ message: "Account not found. Please signup first." });
 //     }
 
-//     // 🔥 FIXED JWT PAYLOAD
-//     const token = jwtProvider.createJwt({
-//       id: user._id,
-//       email: user.email,
-//       role: user.role,
-//     });
-
-//     let redirect = "/";
-//     if (user.role === "SELLER") redirect = "/seller/dashboard";
-//     else if (user.role !== "ADMIN" && user.role !== "ROLE_ADMIN") {
-//   return res.status(403).json({ message: "Not an admin" });
-// }
-
-
-//     res.status(200).json({
-//       token,
-//       user: {
-//         id: user._id,
-//         email: user.email,
-//         role: user.role,
-//         fullName: user.fullName,
-//       },
-//       redirect,
-//     });
-//   } catch (error) {
-//     console.error("googleLogin error:", error);
-//     res.status(401).json({
-//       message: error.message || "Google login failed",
-//     });
-//   }
-// }
-
-// async googleLogin(req, res) {
-//   try {
-//     const { idToken } = req.body;
-
-//     if (!idToken) {
-//       return res.status(400).json({ message: "Id token required" });
-//     }
-
-//     const decoded = await admin.auth().verifyIdToken(idToken);
-//     const { email } = decoded;
-
-//     const user = await User.findOne({ email });
-
-//     if (!user) {
-//       return res.status(404).json({
-//         message: "Account not found. Please signup first.",
-//       });
-//     }
-
-//     // ✅ ROLE CHECK (CLEAN)
-//     if (!["ADMIN", "ROLE_ADMIN", "SELLER", "CUSTOMER"].includes(user.role)) {
+//     // 🔥 FIXED ROLE CHECK
+//     if (
+//       ![
+//         "ROLE_ADMIN",
+//         "ROLE_SELLER",
+//         "ROLE_CUSTOMER",
+//         "ADMIN",
+//         "SELLER",
+//         "CUSTOMER",
+//       ].includes(user.role)
+//     ) {
 //       return res.status(403).json({ message: "Invalid role" });
 //     }
 
-//     // 🔥 CREATE JWT
 //     const token = jwtProvider.createJwt({
 //       id: user._id,
 //       email: user.email,
 //       role: user.role,
 //     });
 
-//     // 🔥 ROLE BASED REDIRECT
 //     let redirect = "/";
-
-//     if (user.role === "SELLER") {
+//     if (user.role === "ROLE_SELLER" || user.role === "SELLER") {
 //       redirect = "/seller/dashboard";
-//     } else if (user.role === "ADMIN" || user.role === "ROLE_ADMIN") {
+//     } else if (user.role === "ROLE_ADMIN" || user.role === "ADMIN") {
 //       redirect = "/admin";
-//     } else {
-//       redirect = "/";
 //     }
 
 //     res.status(200).json({
@@ -304,41 +223,65 @@ async  googleSignup(req, res) {
 
 //   } catch (error) {
 //     console.error("googleLogin error:", error);
-//     res.status(401).json({
-//       message: error.message || "Google login failed",
-//     });
+//     res.status(401).json({ message: error.message || "Google login failed" });
 //   }
 // }
 
 
 async googleLogin(req, res) {
   try {
-    const { idToken } = req.body;
+    const { idToken, role } = req.body; // ✅ CAPTURE ROLE
 
-    if (!idToken) return res.status(400).json({ message: "Id token required" });
+    console.log("🔥 GOOGLE LOGIN BODY:", req.body);
+    
+
+    if (!idToken)
+      return res.status(400).json({ message: "Id token required" });
 
     const decoded = await admin.auth().verifyIdToken(idToken);
     const { email } = decoded;
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "Account not found. Please signup first." });
+      return res
+        .status(404)
+        .json({ message: "Account not found. Please signup first." });
     }
 
-    // 🔥 FIXED ROLE CHECK
-    if (
-      ![
-        "ROLE_ADMIN",
-        "ROLE_SELLER",
-        "ROLE_CUSTOMER",
-        "ADMIN",
-        "SELLER",
-        "CUSTOMER",
-      ].includes(user.role)
-    ) {
-      return res.status(403).json({ message: "Invalid role" });
+    /* ================= ROLE SWITCH LOGIC 🔥 ================= */
+
+    // ✅ SELLER LOGIN FLOW
+    if (role === "seller") {
+
+      // const seller = await Seller.findOne({ userId: user._id });
+      const seller = await Seller.findOne({ email: user.email }); 
+
+      if (!seller) {
+        return res.status(403).json({
+          message: "Seller account not found",
+        });
+      }
+
+      const token = jwtProvider.createJwt({
+        id: user._id,
+        email: user.email,
+        role: "ROLE_SELLER", 
+        sellerId: seller._id 
+      });
+
+      return res.status(200).json({
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          role: "ROLE_SELLER",
+          fullName: user.fullName,
+        },
+        redirect: "/seller/dashboard",
+      });
     }
 
+    // ✅ NORMAL CUSTOMER LOGIN
     const token = jwtProvider.createJwt({
       id: user._id,
       email: user.email,
@@ -346,11 +289,7 @@ async googleLogin(req, res) {
     });
 
     let redirect = "/";
-    if (user.role === "ROLE_SELLER" || user.role === "SELLER") {
-      redirect = "/seller/dashboard";
-    } else if (user.role === "ROLE_ADMIN" || user.role === "ADMIN") {
-      redirect = "/admin";
-    }
+    if (user.role === "ROLE_ADMIN") redirect = "/admin";
 
     res.status(200).json({
       token,
@@ -365,7 +304,9 @@ async googleLogin(req, res) {
 
   } catch (error) {
     console.error("googleLogin error:", error);
-    res.status(401).json({ message: error.message || "Google login failed" });
+    res.status(401).json({
+      message: error.message || "Google login failed",
+    });
   }
 }
 

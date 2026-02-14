@@ -98,16 +98,31 @@ class NotificationService {
   }
 
   /* ---------- GET NOTIFICATIONS ---------- */
- async getUserNotifications(userId, role) {
-  const r = role.toLowerCase();
+ async getUserNotifications(userId, role, sellerId) {
+
+  const normalizedRole = normalizeRole(role);
+
 
   // ADMIN
-  if (r.includes("admin")) {
+  if (normalizedRole === "admin") {
     return Notification.find({ role: "admin" })
       .sort({ createdAt: -1 });
   }
 
-  // SELLER + CUSTOMER → BOTH userId based
+  // ✅ SELLER FIXED
+  if (normalizedRole === "seller") {
+    if (!sellerId) {
+      console.log("❌ SELLER ID MISSING");
+      return [];
+    }
+
+
+    return Notification.find({ sellerId })
+      .sort({ createdAt: -1 });
+  }
+
+  // CUSTOMER
+
   return Notification.find({ userId })
     .sort({ createdAt: -1 });
 }

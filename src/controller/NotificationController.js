@@ -60,11 +60,13 @@ class NotificationController {
     try {
       const { id, role, sellerId } = req.user;
 
+
       const data = await notificationService.getUserNotifications(
         id,
         role,
         sellerId
       );
+
 
       return res.status(200).json(data);
     } catch (err) {

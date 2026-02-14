@@ -257,6 +257,7 @@ const OrderItem = require("../model/OrderItem");
 const OrderStatus = require("../domain/OrderStatus");
 const notificationService = require("./notificationService");
 const UserRoles = require("../domain/userRole");
+const Seller = require("../model/Seller");
 
 // ✅ notification map (GLOBAL for this file)
 const ORDER_NOTIFICATION_MAP = {
@@ -408,15 +409,25 @@ class OrderService {
         const savedOrder = await order.save();
         orders.push(savedOrder);
 
-        // await notificationService.createNotification({
-        //     userId: req.user.id, 
-        //   role: "seller",
-        //   title: "New Order Received",
-        //   message: `Order #${savedOrder._id} received`,
-        //   type: "ORDER",
-        //   link: `/seller/orders/${savedOrder._id}`,
-        // });
+console.log("🔥 SELLER NOTIFICATION DEBUG");
+console.log("SellerId:", sellerId);
+console.log("OrderId:", savedOrder._id);
 
+console.log("🔥 SELLER NOTIFICATION DEBUG", {
+   sellerId,
+   orderId: savedOrder._id
+});
+
+
+  
+await notificationService.createNotification({
+   sellerId: new mongoose.Types.ObjectId(sellerId), 
+   role: "seller",
+   title: "New Order Received",
+   message: `Order #${savedOrder._id} received`,
+   type: "ORDER",
+   link: `/seller/orders/${savedOrder._id}`,
+});
 
 
         isFirstSeller = false; // 🔥 VERY IMPORTANT
@@ -429,7 +440,7 @@ class OrderService {
         title: "Order Placed Successfully",
         message: "Your order has been placed successfully",
         type: "ORDER",
-        // link: `/orders`,
+        //  link: `/account/orders/${Order._id}/item/${OrderItem._id}`   // ✅ FIX
          link: "/account/orders"
       });
 
@@ -557,19 +568,26 @@ class OrderService {
       title: ORDER_NOTIFICATION_MAP[orderStatus].title,
       message: ORDER_NOTIFICATION_MAP[orderStatus].message,
       type: "ORDER",
-      link: `/orders/${oldOrder._id}`,
+      // link: `/orders/${oldOrder._id}`,
+      link: `/account/orders` ,
     });
   }
 
-  // 🔔 4. SELLER notification
-  await notificationService.createNotification({
-    userId: oldOrder.seller,
-    role: "SELLER",
+   // 🔔 4. SELLER notification (SAFE)
+ if (!oldOrder.seller) {
+    console.error("🚨 ORDER WITHOUT SELLER:", oldOrder._id);
+
+    throw new Error("Seller notification needs sellerId");
+ }
+
+ await notificationService.createNotification({
+    sellerId: oldOrder.seller ,
+    role: "seller",
     title: "Order Status Updated",
     message: `Order #${oldOrder._id} marked as ${orderStatus}`,
     type: "ORDER",
     link: `/seller/orders/${oldOrder._id}`,
-  });
+ });
 
   // 🔹 5. Return updated + populated order
   return await Order.findById(orderId).populate([
