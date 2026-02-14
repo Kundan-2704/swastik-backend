@@ -1,28 +1,8 @@
-// console.log("✅ SellerRoutes FILE LOADED");
-// const express = require('express');
-// const router = express.Router();
-// const sellerController = require('../controller/sellerController');
-// const sellerMiddleware = require('../middleware/sellerAuthMiddleware');
-
-
-
-
-// router.get("/profile", sellerMiddleware ,sellerController.getSellerProfile)
-// router.post("/", sellerController.createSeller)
-// router.get("/", sellerController.getAllSellers)
-// router.patch("/", sellerMiddleware, sellerController.updateSellers)
-// router.post("/verify/login-otp", sellerController.verifyLoginOtp)
 
 
 
 
 
-// module.exports = router
-
-
-
-
-console.log("✅ SellerRoutes FILE LOADED");
 
 const express = require("express");
 const router = express.Router();

@@ -1,13 +1,3 @@
-// module.exports = {
-//   fabric:
-//     "Kosa aur Tussar silk dono hi natural handloom fabrics hain. Kosa halka aur breathable hota hai.",
-//   care:
-//     "Handloom sarees ke liye dry clean sabse safe option hota hai.",
-//   delivery:
-//     "Orders 5–7 working days me deliver ho jaate hain.",
-//   fallback:
-//     "Main sirf handloom products aur unse related questions ka jawab deta hoon."
-// };
 
 
 

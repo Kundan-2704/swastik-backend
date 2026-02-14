@@ -2,7 +2,6 @@ const AIAgentService = require("../services/AIAgentService");
 
 class AIAgentController {
   async ask(req, res) {
-      console.log("🔥 AI AGENT ASK HIT", req.body);
     try {
       const { query } = req.body;
 

@@ -16,13 +16,7 @@ class UserService {
     }
 
 
-    // async findUserByEmail(email){
-    //     const user = await User.findOne({email})
-    //     if(!user){
-    //         throw new Error(`User does not exist with email ${email}`)
-    //     }
-    //     return user
-    // }
+    
  async createUser(userData) {
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {

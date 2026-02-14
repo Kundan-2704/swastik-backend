@@ -10,14 +10,7 @@ class HomeCategoryService {
         return await HomeCategory.create(homeCategory);
     }
 
-    // async createCategories(homeCategories) {
-    //     const existingCategories = await HomeCategory.find();
-
-    //     if (existingCategories.length == 0) {
-    //         return await HomeCategory.insertMany(homeCategories);
-    //     }
-    //     return existingCategories;
-    // }
+    
 
     async createCategories(homeCategories) {
 
@@ -32,7 +25,6 @@ class HomeCategoryService {
     return existingCategories;
   }
 
-  console.log("INSERTING 👉", homeCategories.length);
 
   // Insert only once
   return await HomeCategory.insertMany(homeCategories);

@@ -164,7 +164,6 @@ async function seed() {
   try {
     await HomeCategory.deleteMany();
     await HomeCategory.insertMany(homeCategories);
-    console.log("✅ HomeCategories seeded successfully");
     process.exit(0);
   } catch (err) {
     console.error("❌ Seeding failed:", err.message);

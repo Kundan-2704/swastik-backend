@@ -9,7 +9,6 @@ mongoose.connect(
 async function Categoryseed() {
     try {
         await Category.deleteMany({});
-        console.log("🧹 Old categories removed");
 
         /* ================= LEVEL 1 ================= */
 
@@ -139,7 +138,6 @@ async function Categoryseed() {
             parentCategory: blockPrinted._id
         });
 
-        console.log("✅ Categories seeded successfully");
         process.exit();
     } catch (err) {
         console.error("❌ Seeding failed:", err);

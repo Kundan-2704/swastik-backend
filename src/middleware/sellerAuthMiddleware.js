@@ -44,10 +44,6 @@ const sellerMiddleware = async (req, res, next) => {
     }
 
 
-    console.log("AUTH HEADER →", req.headers.authorization);
-console.log("EMAIL FROM JWT →", email);
-console.log("SELLER STATUS →", seller.accountStatus);
-
 
     // ✅ Attach seller
     req.seller = seller;

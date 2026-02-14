@@ -1,11 +1,3 @@
-// const express = require("express");
-// const router = express.Router();
-
-// const reviewController = require("../controller/ReviewController");
-
-// router.get("/dashboard", reviewController.getReviews);
-
-// module.exports = router;
 
 
 

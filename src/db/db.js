@@ -1,7 +1,7 @@
 const { default: mongoose } = require("mongoose")
 const DataInitializeService = require("../service/DataInitializeService")
 
-// const url = "mongodb+srv://rajendradewangan2712_db_user:iohJjcswbJcJiEN5@cluster0.imgaojp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
 const url = process.env.MONGO_URI
 
 const connectDB = async () => {

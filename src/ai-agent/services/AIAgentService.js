@@ -6,26 +6,7 @@ const getReply = require("../utils/getReply");
 
 
 class AIAgentService {
-  // async handleQuery(query) {
-  //   const intent = detectIntent(query);
-
-  //   switch (intent) {
-  //     case "SEARCH_PRODUCT":
-  //       return await this.searchProducts(query);
-
-  //     case "FABRIC_INFO":
-  //       return { reply: replies.fabric };
-
-  //     case "CARE_INFO":
-  //       return { reply: replies.care };
-
-  //     case "DELIVERY_INFO":
-  //       return { reply: replies.delivery };
-
-  //     default:
-  //       return { reply: replies.fallback };
-  //   }
-  // }
+ 
 
 
   async handleQuery(query) {

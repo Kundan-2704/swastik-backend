@@ -1,32 +1,3 @@
-// const PDFDocument = require("pdfkit");
-
-// const generatePackingSlipPDF = ({ order, qr }) => {
-//   const doc = new PDFDocument({ size: "A6", margin: 20 });
-
-//   doc.fontSize(14).text("SWASTIK", { align: "center" });
-//   doc.moveDown();
-
-//   doc.fontSize(10).text(`Order ID: ${order._id}`);
-//   doc.moveDown();
-
-//   order.orderItems.forEach((item, i) => {
-//     doc.text(`${i + 1}. ${item.title || "Product"}`);
-//     doc.text(`Qty: ${item.quantity || 1}`);
-//     doc.moveDown(0.5);
-//   });
-
-//   doc.moveDown();
-//   doc.image(qr, { width: 80, align: "center" });
-
-//   doc.moveDown();
-//   doc.fontSize(8).text("Inside Slip - Not an Invoice", { align: "center" });
-
-//   doc.end();
-//   return doc;
-// };
-
-// module.exports = { generatePackingSlipPDF };
-
 
 
 

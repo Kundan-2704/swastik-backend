@@ -74,7 +74,6 @@ router.post("/seed", async (req, res) => {
     for (const cat of categories) {
       // skip if parent missing
       if (cat.parentCategoryId && !map[cat.parentCategoryId]) {
-        console.log("❌ Missing parent:", cat.parentCategoryId);
         continue;
       }
 

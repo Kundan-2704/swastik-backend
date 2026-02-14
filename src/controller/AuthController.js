@@ -1,62 +1,3 @@
-// const admin = require("../config/firebaseAdmin");
-// const UserRoles = require("../domain/userRole");
-// const AuthService = require("../service/AuthService");
-
-// class authController {
-//     async sendLoginOtp(req, res) {
-//         try {
-//             const email = req.body.email
-//             await AuthService.sendLoginOtp(email)
-
-//             res.status(200).json({ message: "otp send successfully" });
-//         } catch (error) {
-//             res.status(error instanceof Error ? 404 : 500)
-//                 .json({ message: error.message })
-//         }
-//     }
-
-
-//     async createUser(req, res) {
-//         try {
-//             const jwt = await AuthService.createUser(req.body)
-
-//             const authRes = {
-//                 jwt,
-//                 message: "User Created Successfully",
-//                 role: UserRoles.CUSTOMER
-//             }
-
-//             res.status(200).json(authRes);
-//         } catch (error) {
-//             res.status(error instanceof Error ? 404 : 500)
-//                 .json({ message: error.message })
-//         }
-//     }
-
-
-//     async signin(req, res) {
-//         try {
-//             const authRes = await AuthService.signin(req.body)
-
-//             res.status(200).json(authRes);
-//         } catch (error) {
-//             res.status(error instanceof Error ? 404 : 500)
-//                 .json({ message: error.message })
-//         }
-//     }
-
-
-
-// }
-
-// module.exports = new authController();
-
-
-
-
-
-
-
 const admin = require("../config/firebaseAdmin");
 const UserRoles = require("../domain/userRole");
 const AuthService = require("../service/AuthService");
@@ -169,71 +110,13 @@ async  googleSignup(req, res) {
   /* ================= GOOGLE LOGIN ================= */
 
 
-// async googleLogin(req, res) {
-//   try {
-//     const { idToken } = req.body;
 
-//     if (!idToken) return res.status(400).json({ message: "Id token required" });
-
-//     const decoded = await admin.auth().verifyIdToken(idToken);
-//     const { email } = decoded;
-
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//       return res.status(404).json({ message: "Account not found. Please signup first." });
-//     }
-
-//     // 🔥 FIXED ROLE CHECK
-//     if (
-//       ![
-//         "ROLE_ADMIN",
-//         "ROLE_SELLER",
-//         "ROLE_CUSTOMER",
-//         "ADMIN",
-//         "SELLER",
-//         "CUSTOMER",
-//       ].includes(user.role)
-//     ) {
-//       return res.status(403).json({ message: "Invalid role" });
-//     }
-
-//     const token = jwtProvider.createJwt({
-//       id: user._id,
-//       email: user.email,
-//       role: user.role,
-//     });
-
-//     let redirect = "/";
-//     if (user.role === "ROLE_SELLER" || user.role === "SELLER") {
-//       redirect = "/seller/dashboard";
-//     } else if (user.role === "ROLE_ADMIN" || user.role === "ADMIN") {
-//       redirect = "/admin";
-//     }
-
-//     res.status(200).json({
-//       token,
-//       user: {
-//         id: user._id,
-//         email: user.email,
-//         role: user.role,
-//         fullName: user.fullName,
-//       },
-//       redirect,
-//     });
-
-//   } catch (error) {
-//     console.error("googleLogin error:", error);
-//     res.status(401).json({ message: error.message || "Google login failed" });
-//   }
-// }
 
 
 async googleLogin(req, res) {
   try {
     const { idToken, role } = req.body; // ✅ CAPTURE ROLE
 
-    console.log("🔥 GOOGLE LOGIN BODY:", req.body);
-    
 
     if (!idToken)
       return res.status(400).json({ message: "Id token required" });

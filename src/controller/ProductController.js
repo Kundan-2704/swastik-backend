@@ -3,7 +3,6 @@ const ProductService = require("../service/ProductService.js");
 
 const Product = require("../model/Product.js");
 
-// const uploadToCloudinary = require("../util/uploadToCloudinary.js");
 
 
 class SellerProductController {
@@ -25,8 +24,6 @@ class SellerProductController {
         limit
       );
 
-      console.log("SELLER ID →", seller._id);
-      console.log("PAGE →", page, "LIMIT →", limit);
 
       return res.status(200).json(products);
 
@@ -200,11 +197,6 @@ class SellerProductController {
 
 
   async bulkUpdateStock(req, res) {
-    console.log("🔥 BULK BODY:", req.body);
-    console.log("🔥 TYPES:", {
-      productIds: Array.isArray(req.body.productIds),
-      quantityType: typeof req.body.quantity,
-    });
 
     try {
       const { productIds, quantity } = req.body;

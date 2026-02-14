@@ -117,7 +117,6 @@ class PaymentService {
     wallet.holdBalance += amount; // hold till return window
     await wallet.save();
 
-    console.log("💰 Wallet credited:", amount, "Seller:", order.seller);
     return wallet;
   }
 
