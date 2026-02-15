@@ -11,6 +11,7 @@
   "author": "kundan",
   "license": "ISC",
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
     "archiver": "^7.0.1",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",

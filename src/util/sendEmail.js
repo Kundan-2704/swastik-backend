@@ -28,38 +28,77 @@
 
 
 
-const nodemailer = require("nodemailer");
+// const nodemailer = require("nodemailer");
 
 
-console.log("BREVO LOGIN:", process.env.BREVO_LOGIN);
-console.log("BREVO PASS:", process.env.BREVO_PASSWORD ? "EXISTS" : "MISSING");
+// console.log("BREVO LOGIN:", process.env.BREVO_LOGIN);
+// console.log("BREVO PASS:", process.env.BREVO_PASSWORD ? "EXISTS" : "MISSING");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_LOGIN,
-    pass: process.env.BREVO_PASSWORD,
-  },
-    tls: {
-    rejectUnauthorized: false, // 😎 prevents TLS drama
-  },
-});
+// const transporter = nodemailer.createTransport({
+//   host: "smtp-relay.brevo.com",
+//   port: 587,
+//   secure: false,
+//   auth: {
+//     user: process.env.BREVO_LOGIN,
+//     pass: process.env.BREVO_PASSWORD,
+//   },
+//     tls: {
+//     rejectUnauthorized: false, // 😎 prevents TLS drama
+//   },
+// });
+
+// async function sendVerificationEmail(to, subject, body) {
+//   try {
+//     const info = await transporter.sendMail({
+//       from: '"Swastik Handloom" <noreply@swastikhandloom.com>', 
+//       to,
+//       subject,
+//       html: body,
+//     });
+
+//     console.log("✅ Email sent:", info.messageId);
+
+//   } catch (error) {
+//     console.error("❌ Email failed:", error);
+//   }
+// }
+
+// module.exports = sendVerificationEmail;
+
+
+
+
+
+
+const brevo = require('@getbrevo/brevo');
+
+const apiInstance = new brevo.TransactionalEmailsApi();
+
+apiInstance.setApiKey(
+  brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
 
 async function sendVerificationEmail(to, subject, body) {
   try {
-    const info = await transporter.sendMail({
-      from: '"Swastik Handloom" <noreply@swastikhandloom.com>', 
-      to,
-      subject,
-      html: body,
-    });
 
-    console.log("✅ Email sent:", info.messageId);
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+
+    sendSmtpEmail.sender = {
+      name: "Swastik Handloom",
+      email: "noreply@swastikhandloom.com",
+    };
+
+    sendSmtpEmail.to = [{ email: to }];
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = body;
+
+    const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+
+    console.log("✅ Email sent via API");
 
   } catch (error) {
-    console.error("❌ Email failed:", error);
+    console.error("❌ API Email Error:", error.response?.body || error);
   }
 }
 
