@@ -2,22 +2,60 @@
 
 
 
-const { Resend } = require("resend");
+// const { Resend } = require("resend");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// const resend = new Resend(process.env.RESEND_API_KEY);
+
+// async function sendVerificationEmail(to, subject, body) {
+//   try {
+//     await resend.emails.send({
+//       from: "Swastik <onboarding@resend.dev>",
+//       to,
+//       subject,
+//       html: body,
+//     });
+
+//   } catch (error) {
+//     console.error("❌ Email send failed:", error);
+//     throw error;
+//   }
+// }
+
+// module.exports = sendVerificationEmail;
+
+
+
+
+
+
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.BREVO_LOGIN,
+    pass: process.env.BREVO_PASSWORD,
+  },
+    tls: {
+    rejectUnauthorized: false, // 😎 prevents TLS drama
+  },
+});
 
 async function sendVerificationEmail(to, subject, body) {
   try {
-    await resend.emails.send({
-      from: "Swastik <onboarding@resend.dev>",
+    const info = await transporter.sendMail({
+      from: '"Swastik Handloom" <noreply@swastikhandloom.com>', 
       to,
       subject,
       html: body,
     });
 
+    console.log("✅ Email sent:", info.messageId);
+
   } catch (error) {
-    console.error("❌ Email send failed:", error);
-    throw error;
+    console.error("❌ Email failed:", error);
   }
 }
 
