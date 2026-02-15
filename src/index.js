@@ -11,16 +11,43 @@ const app = express();
 
 /* ================= CORS ================= */
 
+// const allowedRegex = /^https:\/\/swastik-frontend.*\.vercel\.app$/;
+
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (!origin) return callback(null, true);
+//       if (allowedRegex.test(origin) || origin === "http://localhost:5173") {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//   })
+// );
+
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://swastikhandloom.com",
+  "https://www.swastikhandloom.com"
+];
+
 const allowedRegex = /^https:\/\/swastik-frontend.*\.vercel\.app$/;
 
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
-      if (allowedRegex.test(origin) || origin === "http://localhost:5173") {
+
+      if (
+        allowedRegex.test(origin) ||
+        allowedOrigins.includes(origin)
+      ) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error("Not allowed by CORS: " + origin));
       }
     },
     credentials: true,
