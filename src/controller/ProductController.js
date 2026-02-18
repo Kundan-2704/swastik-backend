@@ -221,7 +221,7 @@ class SellerProductController {
 
       const updatedProducts = await Product.find({
         _id: { $in: productIds },
-      });
+      }).lean();
 
       return res.status(200).json(updatedProducts);
 

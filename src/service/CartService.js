@@ -46,7 +46,8 @@ class CartService {
           path: "seller",
           select: "_id",
         },
-      });
+      })
+      .lean();
 
     /* 🔥 FILTER INVALID ITEMS */
     const validCartItems = cartItems.filter(

@@ -6,17 +6,21 @@
 
 const express = require("express");
 const Category = require("../model/Category");
+const apicache = require("apicache");
+
 const router = express.Router();
+const cache = apicache.middleware;
 
 /* ================= GET ROUTES (ALREADY OK) ================= */
 
 
 /* ================= GET ALL CATEGORIES (ADMIN / TABLE) ================= */
-router.get("/", async (req, res) => {
+router.get("/",cache("30 minutes"), async (req, res) => {
   try {
     const categories = await Category.find()
       .populate("parentCategory", "name")
-      .sort({ level: 1, name: 1 });
+      .sort({ level: 1, name: 1 })
+      .lean();
 
     const formatted = categories.map((cat) => ({
       id: cat._id,
@@ -34,7 +38,7 @@ router.get("/", async (req, res) => {
 
 
 
-router.get("/level1", async (req, res) => {
+router.get("/level1",cache("30 minutes"), async (req, res) => {
   const categories = await Category.find({ level: 1 }).sort({ name: 1 });
   res.json(categories);
 });
@@ -43,16 +47,18 @@ router.get("/level2/:parentId", async (req, res) => {
   const categories = await Category.find({
     level: 2,
     parentCategory: req.params.parentId,
-  }).sort({ name: 1 });
+  }).sort({ name: 1 })
+  .lean();
 
   res.json(categories);
 });
 
-router.get("/level3/:parentId", async (req, res) => {
+router.get("/level3/:parentId",cache("30 minutes"), async (req, res) => {
   const categories = await Category.find({
     level: 3,
     parentCategory: req.params.parentId,
-  }).sort({ name: 1 });
+  }).sort({ name: 1 })
+  .lean();
 
   res.json(categories);
 });
@@ -94,6 +100,8 @@ router.post("/seed", async (req, res) => {
 
       map[cat.categoryId] = saved._id;
     }
+
+    apicache.clear();
 
     return res.status(201).json({
       message: "✅ Categories seeded (duplicate-safe)",

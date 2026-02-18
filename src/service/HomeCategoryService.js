@@ -3,7 +3,7 @@ const HomeCategory = require("../model/HomeCategory");
 
 class HomeCategoryService {
     async getAllHomeCategories() {
-        return await HomeCategory.find();
+        return await HomeCategory.find().lean();
     }
 
     async createHomeCategory(homeCategory) {
@@ -18,7 +18,7 @@ class HomeCategoryService {
     throw new Error("homeCategories must be a non-empty array");
   }
 
-  const existingCategories = await HomeCategory.find();
+  const existingCategories = await HomeCategory.find().lean();
 
   // Agar already hai → same data return
   if (existingCategories.length > 0) {
@@ -33,7 +33,7 @@ class HomeCategoryService {
 
 
     async updateHomeCategory(category, id) {
-        const existingCategory = await HomeCategory.findById(id);
+        const existingCategory = await HomeCategory.findById(id).lean();
 
         if (!existingCategory) {
             throw new Error("Category not found")
@@ -43,6 +43,7 @@ class HomeCategoryService {
             category,
             { new: true }
         )
+        .lean();
     }
 
 }

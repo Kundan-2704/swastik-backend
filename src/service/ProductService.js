@@ -37,7 +37,7 @@ async getAllProducts(query) {
 
     /* ================= CATEGORY FILTER ================= */
     if (categoryId) {
-      const selectedCategory = await Category.findOne({ categoryId });
+      const selectedCategory = await Category.findOne({ categoryId }).lean();
 
       // ❌ invalid category
       if (!selectedCategory) {
@@ -59,7 +59,8 @@ async getAllProducts(query) {
       else if (selectedCategory.level === 2) {
         const level3 = await Category.find({
           parentCategory: selectedCategory._id,
-        });
+        })
+        .lean();
 
         categoryIds =
           level3.length > 0
@@ -139,7 +140,8 @@ async getAllProducts(query) {
       .populate("category", "name categoryId level")
       .sort(sortQuery)
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     const totalElement = await Product.countDocuments(filterQuery);
     const totalPages = Math.max(1, Math.ceil(totalElement / limit));
@@ -231,7 +233,8 @@ async getAllProducts(query) {
     return await Product.find({ seller: sellerId })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
   }
 
 
@@ -239,7 +242,8 @@ async getAllProducts(query) {
     try {
       const product = await Product.findById(productId)
         .populate("seller", "businessDetails")
-        .populate("category", "name categoryId");
+        .populate("category", "name categoryId")
+        .lean();
 
       if (!product) {
         return null;
@@ -294,7 +298,7 @@ async getAllProducts(query) {
       }
     );
 
-    return Product.find({ _id: { $in: productIds } });
+    return Product.find({ _id: { $in: productIds } }).lean();
   }
 
 

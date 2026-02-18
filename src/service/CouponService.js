@@ -8,7 +8,7 @@ const Coupon = require("../model/Coupon");
 class CouponService {
 
   static async getAllCoupons() {
-    return await Coupon.find().sort({ createdAt: -1 });
+    return await Coupon.find().sort({ createdAt: -1 }).lean();
   }
 
   static async createCoupon(data) {
@@ -45,7 +45,8 @@ class CouponService {
     const coupon = await Coupon.findOne({
       code: normalizedCode,
       isActive: true,
-    });
+    })
+    .lean();
 
     if (!coupon) {
       throw new Error("Invalid coupon code");

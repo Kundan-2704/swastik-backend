@@ -4,6 +4,7 @@
 
 const CouponService = require("../service/CouponService");
 const CartService = require("../service/CartService");
+const apicache = require("apicache");
 
 class CouponController {
 
@@ -23,6 +24,7 @@ class CouponController {
   static async createCoupon(req, res) {
     try {
       const coupon = await CouponService.createCoupon(req.body);
+      apicache.clear();
       return res.status(201).json(coupon);
     } catch (error) {
       return res.status(400).json({
@@ -112,6 +114,7 @@ class CouponController {
   static async deleteCoupon(req, res) {
     try {
       await CouponService.deleteCoupon(req.params.id);
+      apicache.clear();
       return res.status(200).json({ success: true });
     } catch (error) {
       return res.status(500).json({

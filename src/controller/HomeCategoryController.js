@@ -4,6 +4,7 @@
 const HomeCategoryService = require("../service/HomeCategoryService");
 const HomeService = require("../service/HomeService");
 const HomeCategorySection = require("../domain/HomeCategorySection");
+const apicache = require("apicache");
 
 class HomeCategoryController {
   async createHomeCategories(req, res) {
@@ -23,6 +24,8 @@ class HomeCategoryController {
 
       const home =
         await HomeService.createHomePageData(categories);
+
+        apicache.clear();
 
       return res.status(201).json(home);
 
@@ -48,6 +51,9 @@ class HomeCategoryController {
       const homeCategory = req.body;
       const updateCategory =
         await HomeCategoryService.updateHomeCategory(homeCategory, id);
+
+        apicache.clear();
+
       return res.status(200).json(updateCategory);
     } catch (error) {
       return res.status(500).json({ message: error.message });

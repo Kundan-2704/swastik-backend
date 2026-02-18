@@ -13,7 +13,8 @@ class DealService {
     async getDeals() {
         return await Deal.find()
             .populate("category")
-            .populate("products"); // ✅ IMPORTANT
+            .populate("products") // ✅ IMPORTANT
+            .lean();
     }
 
     async createDeal(deal) {
@@ -52,7 +53,8 @@ class DealService {
             { new: true }
         )
             .populate("category")
-            .populate("products"); // ✅ IMPORTANT
+            .populate("products") // ✅ IMPORTANT
+            .lean();
     }
 
     async deleteDeal(id) {
@@ -75,7 +77,8 @@ class DealService {
             active: true, // agar field hai
         })
             .populate("products") // 🔥 VERY IMPORTANT
-            .populate("category");
+            .populate("category")
+            .lean();
     }
 
 
