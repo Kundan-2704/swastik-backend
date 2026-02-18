@@ -6,8 +6,13 @@ const connectDB = require("./db/db");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const path = require("path");
+const compression = require("compression");
+
 
 const app = express();
+
+app.use(compression());
+
 
 /* ================= CORS ================= */
 
