@@ -34,7 +34,9 @@ class OrderService {
       // ===============================
       // 2️⃣ COUPON DATA (FROM CART)
       // ===============================
-      const couponCode = cart.appliedCoupon || null;
+      // const couponCode = cart.appliedCoupon || null;
+      const couponCode = cart.couponCode || null;
+
       const couponDiscount = cart.couponDiscount || 0;
 
       // ===============================
@@ -95,8 +97,14 @@ class OrderService {
         const shippingCharge = cart.shippingCharge || 0;
 
 
-        const finalPayable =
-          totalSellingPrice - sellerCouponDiscount + shippingCharge;
+        // const finalPayable =
+        //   totalSellingPrice - sellerCouponDiscount + shippingCharge;
+
+        const finalPayable = Math.max(
+   totalSellingPrice - sellerCouponDiscount + shippingCharge,
+   0
+);
+
 
         // ===============================
         // 7️⃣ CREATE ORDER
@@ -194,10 +202,12 @@ await notificationService.createNotification({
       // ===============================
       // 9️⃣ CLEAR CART AFTER ORDER
       // ===============================
-      cart.cartItems = [];
-      cart.appliedCoupon = null;
-      cart.couponDiscount = 0;
-      await cart.save();
+      // cart.cartItems = [];
+      // cart.appliedCoupon = null;
+      // cart.couponDiscount = 0;
+      // await cart.save();
+
+
 
       return orders;
 

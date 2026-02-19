@@ -43,7 +43,7 @@ class CouponController {
         throw new Error("Coupon code required");
       }
 
-      const cart = await CartService.findUserCart(user._id);
+      const cart = await CartService.getRawCart(user._id);
 
       if (!cart || cart.totalSellingPrice <= 0) {
         throw new Error("Cart empty");
@@ -83,7 +83,7 @@ class CouponController {
     try {
       const user = req.user;
 
-      const cart = await CartService.findUserCart(user._id);
+      const cart = await CartService.getRawCart(user._id);
 
       if (!cart) {
         throw new Error("Cart not found");

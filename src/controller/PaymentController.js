@@ -192,6 +192,7 @@ async verifyPayment(req, res) {
     /* =======================
        3️⃣ FETCH CART
     ======================== */
+    const rawCart = await CartService.getRawCart(req.user._id);
     const cart = await CartService.findUserCart(req.user._id);
 
     if (!cart || !cart.cartItems.length) {
@@ -209,6 +210,11 @@ async verifyPayment(req, res) {
       paymentGateway
     );
 
+    rawCart.cartItems = [];
+rawCart.couponCode = null;
+rawCart.couponDiscount = 0;
+
+await rawCart.save();
 
     /* =======================
        5️⃣ UPDATE STATUS
