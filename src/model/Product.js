@@ -65,6 +65,11 @@ const productSchema = new mongoose.Schema(
       ref: "Seller",
       required: true,
     },
+    priority:{
+      type: Number,
+      default: 0,
+      index: true,
+    }
   },
   { timestamps: true }
 );

@@ -10,6 +10,184 @@ class ProductService {
 
  
 
+// async getAllProducts(query) {
+//   try {
+//     const {
+//       categoryId,
+//       search,
+//       pageNumber = 1,
+//       sort = "newest",
+//       color,
+//       size,
+//       minPrice,
+//       maxPrice,
+//       minDiscount,
+//     } = query;
+
+//     const filterQuery = {};
+
+//     /* ================= SEARCH ================= */
+//     if (search) {
+//       filterQuery.$or = [
+//         { name: { $regex: search, $options: "i" } },
+//         { description: { $regex: search, $options: "i" } },
+//         { fabric: { $regex: search, $options: "i" } },
+//       ];
+//     }
+
+//     /* ================= CATEGORY FILTER ================= */
+//     if (categoryId) {
+//       const selectedCategory = await Category.findOne({ categoryId }).lean();
+
+//       // ❌ invalid category
+//       if (!selectedCategory) {
+//         return {
+//           content: [],
+//           totalPages: 0,
+//           totalElement: 0,
+//         };
+//       }
+
+//       let categoryIds = [];
+
+//       // level 3 (leaf)
+//       if (selectedCategory.level === 3) {
+//         categoryIds = [selectedCategory._id];
+//       }
+
+//       // level 2
+//       else if (selectedCategory.level === 2) {
+//         const level3 = await Category.find({
+//           parentCategory: selectedCategory._id,
+//         })
+//         .lean();
+
+//         categoryIds =
+//           level3.length > 0
+//             ? level3.map((c) => c._id)
+//             : [selectedCategory._id];
+//       }
+
+//       // level 1 (🔥 FIXED BUG)
+//       else if (selectedCategory.level === 1) {
+//         const level2 = await Category.find({
+//           parentCategory: selectedCategory._id,
+//         });
+
+//         if (level2.length === 0) {
+//           // 🔥 VERY IMPORTANT FIX
+//           categoryIds = [selectedCategory._id];
+//         } else {
+//           const level2Ids = level2.map((c) => c._id);
+
+//           const level3 = await Category.find({
+//             parentCategory: { $in: level2Ids },
+//           });
+
+//           categoryIds =
+//             level3.length > 0
+//               ? level3.map((c) => c._id)
+//               : level2Ids;
+//         }
+//       }
+
+//       // 🔒 safety net
+//       if (categoryIds.length === 0) {
+//         return {
+//           content: [],
+//           totalPages: 0,
+//           totalElement: 0,
+//         };
+//       }
+
+//       filterQuery.category = { $in: categoryIds };
+//     }
+
+//     /* ================= OTHER FILTERS ================= */
+//     if (color) filterQuery["colors.name"] = color;
+//     if (size) filterQuery.sizes = size;
+
+//     if (minPrice && maxPrice) {
+//       filterQuery.sellingPrice = {
+//         $gte: Number(minPrice),
+//         $lte: Number(maxPrice),
+//       };
+//     }
+
+//     if (minDiscount) {
+//       filterQuery.discountPercent = {
+//         $gte: Number(minDiscount),
+//       };
+//     }
+
+//     /* ================= SORT ================= */
+//     let sortQuery = {};
+//     if (sort === "price_low") {
+//       sortQuery = { sellingPrice: 1 };
+//     } else if (sort === "price_high") {
+//       sortQuery = { sellingPrice: -1 };
+//     } else {
+//       sortQuery = { createdAt: -1 };
+//     }
+
+//    /* ================= PAGINATION ================= */
+// const limit = 12;
+// const page = Math.max(Number(pageNumber), 1);
+// const skip = (page - 1) * limit;
+
+// /* ================= FEATURED PRODUCTS ================= */
+
+// let featuredProducts = [];
+
+// if (page === 1) {
+//   featuredProducts = await Product.find({
+//     ...filterQuery,
+//     priority: { $gt: 0 },
+//   })
+//     .populate("seller", "businessDetails")
+//     .populate("category", "name categoryId level")
+//     .sort({ priority: -1 })   // 🔥 only featured order
+//     .limit(5)                 // ✅ limit featured count
+//     .lean();
+// }
+
+// /* ================= NORMAL PRODUCTS ================= */
+
+// const normalProducts = await Product.find({
+//   ...filterQuery,
+//   priority:{ $lte: 0 },
+// })
+//   .populate("seller", "businessDetails")
+//   .populate("category", "name categoryId level")
+//   .sort(sortQuery)
+//   .skip(skip)
+//   .limit(limit)
+//   .lean();
+
+// /* ================= MERGE LOGIC ================= */
+
+// const products =
+//   page === 1
+//     ? [...featuredProducts, ...normalProducts]
+//     : normalProducts;
+//     // const totalElement = await Product.countDocuments(filterQuery);
+//     const totalElement = await Product.countDocuments({
+//    ...filterQuery,
+//    priority: { $lte: 0 }
+// });
+//     const totalPages = Math.max(1, Math.ceil(totalElement / limit));
+
+//     return {
+//       content: products,
+//       totalPages,
+//       totalElement,
+//     };
+//   } catch (error) {
+//     console.error("GET ALL PRODUCTS ERROR →", error.message);
+//     throw error;
+//   }
+// }
+
 async getAllProducts(query) {
   try {
     const {
@@ -29,9 +207,9 @@ async getAllProducts(query) {
     /* ================= SEARCH ================= */
     if (search) {
       filterQuery.$or = [
-        { name: { $regex: search, $options: "i" } },
+        { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
-        { fabric: { $regex: search, $options: "i" } },
+        { "details.fabric": { $regex: search, $options: "i" } },
       ];
     }
 
@@ -39,7 +217,6 @@ async getAllProducts(query) {
     if (categoryId) {
       const selectedCategory = await Category.findOne({ categoryId }).lean();
 
-      // ❌ invalid category
       if (!selectedCategory) {
         return {
           content: [],
@@ -50,17 +227,14 @@ async getAllProducts(query) {
 
       let categoryIds = [];
 
-      // level 3 (leaf)
       if (selectedCategory.level === 3) {
         categoryIds = [selectedCategory._id];
       }
 
-      // level 2
       else if (selectedCategory.level === 2) {
         const level3 = await Category.find({
           parentCategory: selectedCategory._id,
-        })
-        .lean();
+        }).lean();
 
         categoryIds =
           level3.length > 0
@@ -68,14 +242,12 @@ async getAllProducts(query) {
             : [selectedCategory._id];
       }
 
-      // level 1 (🔥 FIXED BUG)
       else if (selectedCategory.level === 1) {
         const level2 = await Category.find({
           parentCategory: selectedCategory._id,
         });
 
         if (level2.length === 0) {
-          // 🔥 VERY IMPORTANT FIX
           categoryIds = [selectedCategory._id];
         } else {
           const level2Ids = level2.map((c) => c._id);
@@ -91,7 +263,6 @@ async getAllProducts(query) {
         }
       }
 
-      // 🔒 safety net
       if (categoryIds.length === 0) {
         return {
           content: [],
@@ -122,11 +293,14 @@ async getAllProducts(query) {
 
     /* ================= SORT ================= */
     let sortQuery = {};
+
     if (sort === "price_low") {
       sortQuery = { sellingPrice: 1 };
-    } else if (sort === "price_high") {
+    } 
+    else if (sort === "price_high") {
       sortQuery = { sellingPrice: -1 };
-    } else {
+    } 
+    else {
       sortQuery = { createdAt: -1 };
     }
 
@@ -135,7 +309,31 @@ async getAllProducts(query) {
     const page = Math.max(Number(pageNumber), 1);
     const skip = (page - 1) * limit;
 
-    const products = await Product.find(filterQuery)
+    /* ================= FEATURED PRODUCTS ================= */
+
+    let featuredProducts = [];
+
+    if (page === 1) {
+      featuredProducts = await Product.find({
+        ...filterQuery,
+        priority: { $gt: 0 },
+      })
+        .populate("seller", "businessDetails")
+        .populate("category", "name categoryId level")
+        .sort({ priority: -1 })  // 🔥 featured ordering
+        .limit(5)
+        .lean();
+    }
+
+    /* ================= NORMAL PRODUCTS ================= */
+
+    const normalProducts = await Product.find({
+  ...filterQuery,
+  $or: [
+    { priority: { $exists: false } },   // 🔥 FIX
+    { priority: { $lte: 0 } },
+  ],
+})
       .populate("seller", "businessDetails")
       .populate("category", "name categoryId level")
       .sort(sortQuery)
@@ -143,7 +341,23 @@ async getAllProducts(query) {
       .limit(limit)
       .lean();
 
-    const totalElement = await Product.countDocuments(filterQuery);
+    /* ================= MERGE LOGIC ================= */
+
+    const products =
+      page === 1
+        ? [...featuredProducts, ...normalProducts]
+        : normalProducts;
+
+    /* ================= TOTAL COUNT ================= */
+
+   const totalElement = await Product.countDocuments({
+  ...filterQuery,
+  $or: [
+    { priority: { $exists: false } },
+    { priority: { $lte: 0 } },
+  ],
+});
+
     const totalPages = Math.max(1, Math.ceil(totalElement / limit));
 
     return {
@@ -151,13 +365,12 @@ async getAllProducts(query) {
       totalPages,
       totalElement,
     };
+
   } catch (error) {
     console.error("GET ALL PRODUCTS ERROR →", error.message);
     throw error;
   }
 }
-
-
 
   async createProduct(data, seller) {
     try {
@@ -231,9 +444,9 @@ async getAllProducts(query) {
     const skip = (page - 1) * limit;
 
     return await Product.find({ seller: sellerId })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
+      .sort({ priority:-1, createdAt: -1 })
+      // .skip(skip)
+      // .limit(limit)
       .lean();
   }
 
@@ -325,6 +538,31 @@ async getAllProducts(query) {
     }
   }
 
+/* ================= 🔥 ADMIN PIN CONTROL ================= */
+
+async updatePriority(productId, priority) {
+  return await Product.findByIdAndUpdate(
+    productId,
+    { priority },
+    { new: true }
+  );
+}
+
+async pinProduct(productId) {
+  return await Product.findByIdAndUpdate(
+    productId,
+    { priority: 10 },   // 🔥 high priority
+    { new: true }
+  );
+}
+
+async unpinProduct(productId) {
+  return await Product.findByIdAndUpdate(
+    productId,
+    { priority: 0 },
+    { new: true }
+  );
+}
 
 
 }

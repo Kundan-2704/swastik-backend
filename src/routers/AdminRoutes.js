@@ -7,6 +7,7 @@ const sellerController = require("../controller/sellerController");
 const customerController = require("../controller/customerController");
 const AdminOrderController = require("../controller/AdminOrderController");
 const authMiddleware = require("../middleware/authMiddleware");
+const AdminProductController = require("../controller/AdminProductController");
 
 const router = express.Router();
 
@@ -47,6 +48,31 @@ router.get(
   AdminOrderController.downloadMonthlyInvoicesZip
 );
 
+
+
+router.patch(
+  "/products/:productId/pin",
+  authMiddleware,
+  AdminProductController.pinProduct
+);
+
+router.patch(
+  "/products/:productId/unpin",
+  authMiddleware,
+  AdminProductController.unpinProduct
+);
+
+router.patch(
+  "/products/:productId/priority",
+  authMiddleware,
+  AdminProductController.updatePriority
+);
+
+router.get(
+  "/products",
+  authMiddleware,
+  AdminProductController.getAllAdminProducts
+);
 
 
 module.exports = router;
