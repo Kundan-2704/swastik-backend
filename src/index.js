@@ -100,6 +100,8 @@ const cartRoutes = require("./routers/CartRoutes.js");
 const orderRoutes = require("./routers/OrderRoutes.js");
 const sellerOrderRoutes = require("./routers/SellerOrderRoutes.js");
 
+const wishlistRoutes = require("./routers/WishlistRoutes.js");
+
 const addressRoutes = require("./routers/AddressRoutes.js");
 const paymentRoutes = require("./routers/PaymentRoutes.js");
 const transactionRoutes = require("./routers/TransactionRoutes.js");
@@ -150,6 +152,9 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/sellers/orders", sellerOrderRoutes);
+
+
+app.use("/api/wishlist", wishlistRoutes);
 
 app.use("/api/addresses", addressRoutes);
 app.use("/api/payment", paymentRoutes); // ⚠️ normal routes AFTER parser
