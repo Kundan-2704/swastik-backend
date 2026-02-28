@@ -77,50 +77,110 @@
 const Review = require("../model/Review");
 const Order = require("../model/Order");
 const OrderStatus = require("../domain/OrderStatus");
+const mongoose = require("mongoose");
 
 class ReviewService {
 
-  async createReview(userId, productId, rating, comment) {
+//   async createReview(userId, productId, rating, comment) {
 
-    /* ================= VALIDATION ================= */
+//     /* ================= VALIDATION ================= */
+
+//     if (!productId || !rating || !comment) {
+//       throw new Error("All fields are required");
+//     }
+
+//     /* ================= DUPLICATE CHECK ================= */
+
+//     const existingReview = await Review.findOne({ userId, productId });
+
+//     if (existingReview) {
+//       throw new Error("You already reviewed this product");
+//     }
+
+//     /* ================= DELIVERY CHECK ================= */
+
+//     const deliveredOrder = await Order.findOne({
+//    user: userId,
+//    orderStatus: OrderStatus.DELIVERED,
+//    orderItems: { $exists: true, $ne: [] }   // optional safety
+// }).populate({
+//    path: "orderItems",
+//    match: { product: productId }
+// });
+
+// if (!deliveredOrder || deliveredOrder.orderItems.length === 0) {
+//    throw new Error("Review allowed only after delivery");
+// }
+
+//     /* ================= CREATE REVIEW ================= */
+
+//     return await Review.create({
+//       userId,
+//       productId,
+//       rating: Number(rating),   // ✅ normalize
+//       comment
+//     });
+//   }
+
+
+  async createReview(userId, productId, rating, comment) {
 
     if (!productId || !rating || !comment) {
       throw new Error("All fields are required");
     }
 
-    /* ================= DUPLICATE CHECK ================= */
-
     const existingReview = await Review.findOne({ userId, productId });
-
     if (existingReview) {
       throw new Error("You already reviewed this product");
     }
 
     /* ================= DELIVERY CHECK ================= */
 
-    const deliveredOrder = await Order.findOne({
-   user: userId,
-   orderStatus: OrderStatus.DELIVERED,
-   orderItems: { $exists: true, $ne: [] }   // optional safety
-}).populate({
-   path: "orderItems",
-   match: { product: productId }
-});
+    // Convert to ObjectId for safe comparison
+    const productObjectId = new mongoose.Types.ObjectId(productId);
 
-if (!deliveredOrder || deliveredOrder.orderItems.length === 0) {
-   throw new Error("Review allowed only after delivery");
-}
+    // Get all delivered orders of user
+    const deliveredOrders = await Order.find({
+      user: userId,
+      orderStatus: OrderStatus.DELIVERED
+    }).populate("orderItems");
+
+    if (!deliveredOrders.length) {
+      throw new Error("Review allowed only after delivery");
+    }
+
+    let productFound = false;
+
+    for (const order of deliveredOrders) {
+      for (const item of order.orderItems) {
+
+        // Handle both populated and non-populated cases
+        const itemProductId = item.product?._id
+          ? item.product._id
+          : item.product;
+
+        if (itemProductId && itemProductId.toString() === productObjectId.toString()) {
+          productFound = true;
+          break;
+        }
+      }
+
+      if (productFound) break;
+    }
+
+    if (!productFound) {
+      throw new Error("Review allowed only after delivery");
+    }
 
     /* ================= CREATE REVIEW ================= */
 
     return await Review.create({
       userId,
-      productId,
-      rating: Number(rating),   // ✅ normalize
+      productId: productObjectId,
+      rating: Number(rating),
       comment
     });
   }
-
 
   /* ================= DASHBOARD ================= */
 
