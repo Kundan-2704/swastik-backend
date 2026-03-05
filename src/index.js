@@ -79,6 +79,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/invoices", express.static(path.join(process.cwd(), "invoices")));
 
+/* ================= AFFILIATE TRACKER (🔥 HERE) ================= */
+const affiliateTracker = require("./modules/affiliate/middleware/affiliateTracker");
+app.use(affiliateTracker);
+
 
 /* ================= TEST ================= */
 app.get("/", (req, res) => {
@@ -138,6 +142,8 @@ const ReviewRoutes = require("./routers/ReviewRoutes.js")
 
 const aiAgentRoutes = require("./ai-agent/routes/AIAgentRoutes.js");
 
+const affiliateRoutes = require("./modules/affiliate/routes/AffiliateRoutes.js");
+
 /* ================= MOUNTS ================= */
 
 app.use("/auth", authRoutes);
@@ -193,6 +199,7 @@ app.use("/api/reviews", ReviewRoutes);
 
 app.use("/api/ai-agent", aiAgentRoutes);
 
+app.use("/api/affiliate", affiliateRoutes);
 /* ================= SERVER ================= */
 
 const port = process.env.PORT || 5000;

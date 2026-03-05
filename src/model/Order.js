@@ -187,7 +187,11 @@ shipping: {
   replacement: {
     type: replacementSchema,
     default: null
-  }
+  },
+  referralCode: {
+   type: String,
+   default: null
+}
 
 
 }, { timestamps: true });

@@ -22,7 +22,7 @@ class OrderService {
 
 
 
-  async createorder(user, shippingAddress, cart, paymentMethod = "COD") {
+  async createorder(user, shippingAddress, cart, paymentMethod = "COD", referralCode = null) {
     try {
       // ===============================
       // 1️⃣ VALIDATE CART
@@ -112,6 +112,7 @@ class OrderService {
         const order = new Order({
           user: user._id,
           seller: sellerId,
+          referralCode,
 
           shippingAddress: {
             name: shippingAddress.name,

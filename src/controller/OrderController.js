@@ -68,11 +68,15 @@ class OrderController {
       // ===============================
       // 5️⃣ CREATE ORDER
       // ===============================
+
+      const referralCode = req.cookies?.affiliate_ref || null;
+
       const orders = await OrderService.createorder(
         user,
         shippingAddress,
         cart,
-        paymentGateway || "COD"
+        paymentGateway || "COD",
+        referralCode
       );
 
 
