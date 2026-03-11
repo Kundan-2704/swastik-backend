@@ -109,6 +109,11 @@ isVerified: {
       enum: Object.values(AccountStatus),
       default: AccountStatus.PENDING_VERIFICATION,
     },
+    // Seller schema ke andar fields mein yeh add karo
+fcmToken: {
+  type: String,
+  default: null
+}
   },
   {
     timestamps: true,

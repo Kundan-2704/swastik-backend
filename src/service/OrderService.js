@@ -6,6 +6,8 @@ const notificationService = require("./notificationService");
 const UserRoles = require("../domain/userRole");
 const Seller = require("../model/Seller");
 
+const admin = require("../config/firebaseAdmin");
+
 // ✅ notification map (GLOBAL for this file)
 const ORDER_NOTIFICATION_MAP = {
   PLACED: { title: "Order Confirmed", message: "Your order has been confirmed" },
@@ -165,7 +167,33 @@ class OrderService {
         const savedOrder = await order.save();
         orders.push(savedOrder);
 
+// 📲 PUSH NOTIFICATION TO SELLER
+try {
 
+  const seller = await Seller.findById(sellerId);
+
+  if (seller?.fcmToken) {
+
+    await admin.messaging().send({
+      token: seller.fcmToken,
+      notification: {
+        title: "New Order Received 🛒",
+        body: `Order #${savedOrder._id} placed`
+      },
+      data: {
+        orderId: savedOrder._id.toString()
+      }
+    });
+
+    console.log("✅ PUSH SENT TO SELLER:", sellerId);
+
+  }
+
+} catch (err) {
+
+  console.error("❌ PUSH ERROR:", err.message);
+
+}
 
   
 await notificationService.createNotification({
