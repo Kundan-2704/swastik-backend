@@ -35,6 +35,9 @@ async createRazorpayOrder(req, res) {
       return res.status(400).json({ message: "Cart empty" });
     }
 
+       console.log("🛒 Creating Razorpay order for user:", req.user._id);
+    console.log("Amount:", cart.finalAmount);
+
     const amount = Math.round(cart.finalAmount  * 100);
 
     const razorpayOrder = await razorpay.orders.create({
@@ -64,6 +67,9 @@ async createRazorpayOrder(req, res) {
 async razorpayWebhook(req, res) {
   try {
 
+
+    console.log("🔥 Razorpay Webhook Hit");
+    console.log("Headers:", req.headers["x-razorpay-signature"]);
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
     if (!secret) {
       console.error("❌ WEBHOOK SECRET NOT SET");
@@ -73,16 +79,24 @@ async razorpayWebhook(req, res) {
     const signature = req.headers["x-razorpay-signature"];
     const body = req.body.toString();
 
+    console.log("📦 Webhook Body:", body);
+
     const expectedSignature = crypto
       .createHmac("sha256", secret)
       .update(body)
       .digest("hex");
 
+      console.log("🔐 Expected Signature:", expectedSignature);
+console.log("🔐 Razorpay Signature:", signature);
+
     if (expectedSignature !== signature) {
+        console.log("❌ Signature mismatch");
       return res.status(400).json({ message: "Invalid signature" });
     }
 
     const event = JSON.parse(body);
+
+    console.log("📢 Event Received:", event.event);
 
     if (event.event !== "payment.captured") {
       return res.json({ ok: true });
@@ -90,13 +104,19 @@ async razorpayWebhook(req, res) {
 
     const payment = event.payload.payment.entity;
 
+    console.log("💳 Payment ID:", payment.id);
+console.log("💳 Order ID:", payment.order_id);
+console.log("💰 Amount:", payment.amount);
+
     const order =
       (await Order.findOne({ razorpayOrderId: payment.order_id })) ||
       (await Order.findById(payment.notes?.receipt || payment.receipt));
 
     if (!order) {
+        console.log("⚠️ Order not found");
       return res.json({ ok: true });
     }
+    console.log("📦 Order found:", order._id);
 
     if (order.paymentStatus === "PAID") {
       return res.json({ ok: true });
@@ -106,6 +126,9 @@ async razorpayWebhook(req, res) {
     order.orderStatus = "PLACED";
     order.razorpayPaymentId = payment.id;
     await order.save();
+    console.log("✅ Order marked as PAID:", order._id);
+
+    console.log("🎉 Webhook processing completed");
 
     /* ==============================
    🔥 ADMIN PAYMENT CREATE
@@ -154,6 +177,10 @@ async verifyPayment(req, res) {
       paymentGateway,
     } = req.body;
 
+      console.log("🔎 Verify payment called");
+    console.log("Order ID:", razorpay_order_id);
+    console.log("Payment ID:", razorpay_payment_id);
+    console.log("Gateway:", paymentGateway);
 
     /* =======================
        1️⃣ VERIFY SIGNATURE
