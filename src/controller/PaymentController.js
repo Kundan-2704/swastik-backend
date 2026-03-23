@@ -268,8 +268,25 @@ await rawCart.save();
     /* =======================
    6️⃣ GENERATE INVOICE
 ======================= */
+// for (const order of orders) {
+//   await InvoiceService.generate(order._id);
+// }
+
+/* =======================
+   6️⃣ GENERATE INVOICE + CREDIT SELLER
+======================= */
+
 for (const order of orders) {
+
+  // invoice
   await InvoiceService.generate(order._id);
+
+  // 💰 credit seller wallet
+  await PaymentService.creditSellerWallet(order);
+
+  // 📊 update seller dashboard report
+  await SellerReportService.updateAfterPayment(order);
+
 }
 
 
