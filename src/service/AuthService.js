@@ -3,6 +3,7 @@
 const Cart = require("../model/Cart");
 const User = require("../model/User");
 const VerificationCode = require("../model/VerificationCode");
+const otpTemplate = require("../template/otpTemplate");
 const generateOTP = require("../util/generateOtp");
 const jwtProvider = require("../util/jwtProvider"); // ✅ NO destructuring
 const sendVerificationEmail = require("../util/sendEmail");
@@ -33,10 +34,22 @@ class AuthService {
   });
 
   // ✅ always send email (admin/customer same)
+  // await sendVerificationEmail(
+  //   pureEmail,
+  //   "Login OTP",
+  //   `<h2>Your OTP is ${otp}</h2>`
+  // );
+
+  // 👇 template call here
+  const html = otpTemplate({
+    name: pureEmail.split("@")[0],
+    otp: otp
+  });
+
   await sendVerificationEmail(
     pureEmail,
-    "Login OTP",
-    `<h2>Your OTP is ${otp}</h2>`
+    "Login OTP - Swastik Handloom",
+    html
   );
 
   return { message: "OTP sent successfully" };

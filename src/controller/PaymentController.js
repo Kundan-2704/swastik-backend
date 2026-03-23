@@ -117,7 +117,7 @@ console.log("💰 Amount:", payment.amount);
       (await Order.findById(payment.notes?.receipt || payment.receipt));
 
     if (!order) {
-        console.log("⚠️ Order not found");
+        console.log("ℹ️ Order will be created in verifyPayment");
       return res.json({ ok: true });
     }
     console.log("📦 Order found:", order._id);
