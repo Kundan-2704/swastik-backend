@@ -98,9 +98,13 @@ console.log("🔐 Razorpay Signature:", signature);
 
     console.log("📢 Event Received:", event.event);
 
-    if (event.event !== "payment.captured") {
-      return res.json({ ok: true });
-    }
+    // if (event.event !== "payment.captured") {
+    //   return res.json({ ok: true });
+    // }
+
+    if (!["payment.captured","order.paid"].includes(event.event)) {
+  return res.json({ ok: true });
+}
 
     const payment = event.payload.payment.entity;
 
@@ -123,7 +127,12 @@ console.log("💰 Amount:", payment.amount);
     }
 
     order.paymentStatus = "PAID";
-    order.orderStatus = "PLACED";
+    // order.orderStatus = "PLACED";
+
+    if (order.orderStatus === "PENDING") {
+  order.orderStatus = "PLACED";
+}
+
     order.razorpayPaymentId = payment.id;
     await order.save();
     console.log("✅ Order marked as PAID:", order._id);
@@ -234,7 +243,8 @@ async verifyPayment(req, res) {
       req.user,
       shippingAddress,
       cart,
-      paymentGateway
+      paymentGateway,
+      razorpay_order_id,
     );
 
     rawCart.cartItems = [];

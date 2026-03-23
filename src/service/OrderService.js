@@ -145,6 +145,9 @@ class OrderService {
           totalItem,
           paymentMethod,
           orderStatus: OrderStatus.PENDING,
+
+          razorpayOrderId: referralCode,
+
         });
 
         // ===============================
