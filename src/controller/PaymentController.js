@@ -27,36 +27,36 @@ class PaymentController {
 
 
 
-async createRazorpayOrder(req, res) {
-  try {
-    const cart = await Cart.findOne({ user: req.user._id });
+  async createRazorpayOrder(req, res) {
+    try {
+      const cart = await Cart.findOne({ user: req.user._id });
 
-    if (!cart || !cart.finalAmount ) {
-      return res.status(400).json({ message: "Cart empty" });
+      if (!cart || !cart.finalAmount) {
+        return res.status(400).json({ message: "Cart empty" });
+      }
+
+      console.log("🛒 Creating Razorpay order for user:", req.user._id);
+      console.log("Amount:", cart.finalAmount);
+
+      const amount = Math.round(cart.finalAmount * 100);
+
+      const razorpayOrder = await razorpay.orders.create({
+        amount,
+        currency: "INR",
+        receipt: `rcpt_${Date.now()}`,
+      });
+
+      res.json({
+        razorpayOrderId: razorpayOrder.id,
+        amount,
+        currency: "INR",
+      });
+
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ message: "Payment init failed" });
     }
-
-       console.log("🛒 Creating Razorpay order for user:", req.user._id);
-    console.log("Amount:", cart.finalAmount);
-
-    const amount = Math.round(cart.finalAmount  * 100);
-
-    const razorpayOrder = await razorpay.orders.create({
-      amount,
-      currency: "INR",
-      receipt: `rcpt_${Date.now()}`,
-    });
-
-    res.json({
-      razorpayOrderId: razorpayOrder.id,
-      amount,
-      currency: "INR",
-    });
-
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: "Payment init failed" });
   }
-}
 
 
   /* =================================================
@@ -64,242 +64,242 @@ async createRazorpayOrder(req, res) {
   ================================================== */
 
 
-async razorpayWebhook(req, res) {
-  try {
+  async razorpayWebhook(req, res) {
+    try {
 
 
-    console.log("🔥 Razorpay Webhook Hit");
-    console.log("Headers:", req.headers["x-razorpay-signature"]);
-    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-    if (!secret) {
-      console.error("❌ WEBHOOK SECRET NOT SET");
-      return res.status(500).json({ message: "Server misconfigured" });
-    }
+      console.log("🔥 Razorpay Webhook Hit");
+      console.log("Headers:", req.headers["x-razorpay-signature"]);
+      const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+      if (!secret) {
+        console.error("❌ WEBHOOK SECRET NOT SET");
+        return res.status(500).json({ message: "Server misconfigured" });
+      }
 
-    const signature = req.headers["x-razorpay-signature"];
-    const body = req.body.toString();
+      const signature = req.headers["x-razorpay-signature"];
+      const body = req.body.toString();
 
-    console.log("📦 Webhook Body:", body);
+      console.log("📦 Webhook Body:", body);
 
-    const expectedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(body)
-      .digest("hex");
+      const expectedSignature = crypto
+        .createHmac("sha256", secret)
+        .update(body)
+        .digest("hex");
 
       console.log("🔐 Expected Signature:", expectedSignature);
-console.log("🔐 Razorpay Signature:", signature);
+      console.log("🔐 Razorpay Signature:", signature);
 
-    if (expectedSignature !== signature) {
+      if (expectedSignature !== signature) {
         console.log("❌ Signature mismatch");
-      return res.status(400).json({ message: "Invalid signature" });
-    }
+        return res.status(400).json({ message: "Invalid signature" });
+      }
 
-    const event = JSON.parse(body);
+      const event = JSON.parse(body);
 
-    console.log("📢 Event Received:", event.event);
+      console.log("📢 Event Received:", event.event);
 
-    // if (event.event !== "payment.captured") {
-    //   return res.json({ ok: true });
-    // }
+      // if (event.event !== "payment.captured") {
+      //   return res.json({ ok: true });
+      // }
 
-    if (!["payment.captured","order.paid"].includes(event.event)) {
-  return res.json({ ok: true });
-}
+      if (!["payment.captured", "order.paid"].includes(event.event)) {
+        return res.json({ ok: true });
+      }
 
-    const payment = event.payload.payment.entity;
+      const payment = event.payload.payment.entity;
 
-    console.log("💳 Payment ID:", payment.id);
-console.log("💳 Order ID:", payment.order_id);
-console.log("💰 Amount:", payment.amount);
+      console.log("💳 Payment ID:", payment.id);
+      console.log("💳 Order ID:", payment.order_id);
+      console.log("💰 Amount:", payment.amount);
 
-    const order =
-      (await Order.findOne({ razorpayOrderId: payment.order_id })) ||
-      (await Order.findById(payment.notes?.receipt || payment.receipt));
+      const order =
+        (await Order.findOne({ razorpayOrderId: payment.order_id })) ||
+        (await Order.findById(payment.notes?.receipt || payment.receipt));
 
-    if (!order) {
+      if (!order) {
         console.log("ℹ️ Order will be created in verifyPayment");
+        return res.json({ ok: true });
+      }
+      console.log("📦 Order found:", order._id);
+
+      if (order.paymentStatus === "PAID") {
+        return res.json({ ok: true });
+      }
+
+      order.paymentStatus = "PAID";
+      // order.orderStatus = "PLACED";
+
+      if (order.orderStatus === "PENDING") {
+        order.orderStatus = "PLACED";
+      }
+
+      order.razorpayPaymentId = payment.id;
+      await order.save();
+      console.log("✅ Order marked as PAID:", order._id);
+
+      console.log("🎉 Webhook processing completed");
+
+      /* ==============================
+     🔥 ADMIN PAYMENT CREATE
+  ============================== */
+      await AdminPaymentService.createFromOrder(order, payment);
+
+      await Notification.create({
+        user: order.user,
+        title: "Payment successful",
+        message: `Your payment for order ${order._id} was successful`,
+        link: `/account/orders/${order._id}`,
+      });
+
+      await Notification.create({
+        user: order.seller,
+        title: "New order received",
+        message: `You received a new order ${order._id}`,
+        link: `/seller/orders/${order._id}`,
+      });
+
+      global.io?.to(order.user.toString()).emit("notification");
+      global.io?.to(order.seller.toString()).emit("notification");
+
+      await PaymentService.creditSellerWallet(order);
+      await SellerReportService.updateAfterPayment(order);
+
       return res.json({ ok: true });
+
+    } catch (err) {
+      console.error("❌ WEBHOOK ERROR:", err);
+      return res.status(500).json({ message: "Webhook error" });
     }
-    console.log("📦 Order found:", order._id);
-
-    if (order.paymentStatus === "PAID") {
-      return res.json({ ok: true });
-    }
-
-    order.paymentStatus = "PAID";
-    // order.orderStatus = "PLACED";
-
-    if (order.orderStatus === "PENDING") {
-  order.orderStatus = "PLACED";
-}
-
-    order.razorpayPaymentId = payment.id;
-    await order.save();
-    console.log("✅ Order marked as PAID:", order._id);
-
-    console.log("🎉 Webhook processing completed");
-
-    /* ==============================
-   🔥 ADMIN PAYMENT CREATE
-============================== */
-await AdminPaymentService.createFromOrder(order, payment);
-
-    await Notification.create({
-      user: order.user,
-      title: "Payment successful",
-      message: `Your payment for order ${order._id} was successful`,
-      link: `/account/orders/${order._id}`,
-    });
-
-    await Notification.create({
-      user: order.seller,
-      title: "New order received",
-      message: `You received a new order ${order._id}`,
-      link: `/seller/orders/${order._id}`,
-    });
-
-    global.io?.to(order.user.toString()).emit("notification");
-    global.io?.to(order.seller.toString()).emit("notification");
-
-    await PaymentService.creditSellerWallet(order);
-    await SellerReportService.updateAfterPayment(order);
-
-    return res.json({ ok: true });
-
-  } catch (err) {
-    console.error("❌ WEBHOOK ERROR:", err);
-    return res.status(500).json({ message: "Webhook error" });
   }
-}
 
 
 
 
-async verifyPayment(req, res) {
-  try {
+  async verifyPayment(req, res) {
+    try {
 
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      addressId,
-      paymentGateway,
-    } = req.body;
+      const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        addressId,
+        paymentGateway,
+      } = req.body;
 
       console.log("🔎 Verify payment called");
-    console.log("Order ID:", razorpay_order_id);
-    console.log("Payment ID:", razorpay_payment_id);
-    console.log("Gateway:", paymentGateway);
+      console.log("Order ID:", razorpay_order_id);
+      console.log("Payment ID:", razorpay_payment_id);
+      console.log("Gateway:", paymentGateway);
 
-    /* =======================
-       1️⃣ VERIFY SIGNATURE
-    ======================== */
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
+      /* =======================
+         1️⃣ VERIFY SIGNATURE
+      ======================== */
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-    const expected = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(body)
-      .digest("hex");
+      const expected = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(body)
+        .digest("hex");
 
-    if (expected !== razorpay_signature) {
-      return res.status(400).json({ message: "Invalid signature" });
-    }
-
-    /* =======================
-       2️⃣ FETCH ADDRESS
-    ======================== */
-    const addressDoc = await Address.findById(addressId);
-
-    if (!addressDoc) {
-      return res.status(404).json({ message: "Address not found" });
-    }
-
-    const shippingAddress = {
-      name: addressDoc.name,
-      mobile: addressDoc.mobile,
-      address: addressDoc.address,
-      locality: addressDoc.locality,
-      city: addressDoc.city,
-      state: addressDoc.state,
-      pinCode: addressDoc.pinCode, // ⚠️ spelling IMPORTANT
-    };
-
-
-    /* =======================
-       3️⃣ FETCH CART
-    ======================== */
-    const rawCart = await CartService.getRawCart(req.user._id);
-    const cart = await CartService.findUserCart(req.user._id);
-
-    if (!cart || !cart.cartItems.length) {
-      return res.status(400).json({ message: "Cart empty" });
-    }
-
-
-    /* =======================
-       4️⃣ CREATE ORDER
-    ======================== */
-    const orders = await OrderService.createorder(
-      req.user,
-      shippingAddress,
-      cart,
-      paymentGateway,
-      razorpay_order_id,
-    );
-
-    rawCart.cartItems = [];
-rawCart.couponCode = null;
-rawCart.couponDiscount = 0;
-
-await rawCart.save();
-
-    /* =======================
-       5️⃣ UPDATE STATUS
-    ======================== */
-    await Order.updateMany(
-      { _id: { $in: orders.map(o => o._id) } },
-      {
-        paymentStatus: "PAID",
-        orderStatus: "CONFIRMED",
+      if (expected !== razorpay_signature) {
+        return res.status(400).json({ message: "Invalid signature" });
       }
-    );
+
+      /* =======================
+         2️⃣ FETCH ADDRESS
+      ======================== */
+      const addressDoc = await Address.findById(addressId);
+
+      if (!addressDoc) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+
+      const shippingAddress = {
+        name: addressDoc.name,
+        mobile: addressDoc.mobile,
+        address: addressDoc.address,
+        locality: addressDoc.locality,
+        city: addressDoc.city,
+        state: addressDoc.state,
+        pinCode: addressDoc.pinCode, // ⚠️ spelling IMPORTANT
+      };
 
 
-    /* =======================
-   6️⃣ GENERATE INVOICE
-======================= */
-// for (const order of orders) {
-//   await InvoiceService.generate(order._id);
-// }
+      /* =======================
+         3️⃣ FETCH CART
+      ======================== */
+      const rawCart = await CartService.getRawCart(req.user._id);
+      const cart = await CartService.findUserCart(req.user._id);
 
-/* =======================
-   6️⃣ GENERATE INVOICE + CREDIT SELLER
-======================= */
-
-for (const order of orders) {
-
-  // invoice
-  await InvoiceService.generate(order._id);
-
-  // 💰 credit seller wallet
-  await PaymentService.creditSellerWallet(order);
-
-  // 📊 update seller dashboard report
-  await SellerReportService.updateAfterPayment(order);
-
-}
+      if (!cart || !cart.cartItems.length) {
+        return res.status(400).json({ message: "Cart empty" });
+      }
 
 
-    return res.json({ success: true });
+      /* =======================
+         4️⃣ CREATE ORDER
+      ======================== */
+      const orders = await OrderService.createorder(
+        req.user,
+        shippingAddress,
+        cart,
+        paymentGateway,
+        razorpay_order_id,
+      );
 
-  } catch (err) {
-    console.error("❌ VERIFY CRASH:", err);
-    return res.status(500).json({
-      message: "Payment verification failed",
-      error: err.message,
-    });
+      rawCart.cartItems = [];
+      rawCart.couponCode = null;
+      rawCart.couponDiscount = 0;
+
+      await rawCart.save();
+
+      /* =======================
+         5️⃣ UPDATE STATUS
+      ======================== */
+      await Order.updateMany(
+        { _id: { $in: orders.map(o => o._id) } },
+        {
+          paymentStatus: "PAID",
+          orderStatus: "CONFIRMED",
+        }
+      );
+
+
+      /* =======================
+     6️⃣ GENERATE INVOICE
+  ======================= */
+      // for (const order of orders) {
+      //   await InvoiceService.generate(order._id);
+      // }
+
+      /* =======================
+         6️⃣ GENERATE INVOICE + CREDIT SELLER
+      ======================= */
+
+      for (const order of orders) {
+
+        // invoice
+        await InvoiceService.generate(order._id);
+
+        // 💰 credit seller wallet
+        await PaymentService.creditSellerWallet(order);
+
+        // 📊 update seller dashboard report
+        await SellerReportService.updateAfterPayment(order);
+
+      }
+
+
+      return res.json({ success: true });
+
+    } catch (err) {
+      console.error("❌ VERIFY CRASH:", err);
+      return res.status(500).json({
+        message: "Payment verification failed",
+        error: err.message,
+      });
+    }
   }
-}
 
 
   /* =================================================
@@ -332,6 +332,126 @@ for (const order of orders) {
       res.status(400).json({ message: err.message });
     }
   }
+
+
+
+  /* =================================================
+   4️⃣ CREATE COD ORDER
+================================================== */
+
+  async createCODOrder(req, res) {
+    try {
+
+      const { addressId } = req.body;
+
+      /* =======================
+         1️⃣ FETCH ADDRESS
+      ======================== */
+      const addressDoc = await Address.findById(addressId);
+
+      if (!addressDoc) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+
+      const shippingAddress = {
+        name: addressDoc.name,
+        mobile: addressDoc.mobile,
+        address: addressDoc.address,
+        locality: addressDoc.locality,
+        city: addressDoc.city,
+        state: addressDoc.state,
+        pinCode: addressDoc.pinCode,
+      };
+
+      /* =======================
+         2️⃣ FETCH CART
+      ======================== */
+      const rawCart = await CartService.getRawCart(req.user._id);
+      const cart = await CartService.findUserCart(req.user._id);
+
+      if (!cart || !cart.cartItems.length) {
+        return res.status(400).json({ message: "Cart empty" });
+      }
+
+      /* =======================
+         3️⃣ CREATE ORDER (COD)
+      ======================== */
+
+      const orders = await OrderService.createorder(
+        req.user,
+        shippingAddress,
+        cart,
+        "COD", // payment method
+        null // razorpay order id not required
+      );
+
+      /* =======================
+         4️⃣ UPDATE STATUS
+      ======================== */
+
+      await Order.updateMany(
+        { _id: { $in: orders.map(o => o._id) } },
+        {
+          paymentStatus: "PENDING", // payment pending
+          orderStatus: "CONFIRMED",
+        }
+      );
+
+      /* =======================
+         5️⃣ CLEAR CART
+      ======================== */
+
+      rawCart.cartItems = [];
+      rawCart.couponCode = null;
+      rawCart.couponDiscount = 0;
+
+      await rawCart.save();
+
+      /* =======================
+         6️⃣ GENERATE INVOICE
+      ======================== */
+
+      for (const order of orders) {
+
+        await InvoiceService.generate(order._id);
+
+        // seller report update
+        // await SellerReportService.updateAfterPayment(order);
+
+        // await Notification.create({
+        //   user: order.user,
+        //   role: "CUSTOMER",
+        //   title: "Order placed (COD)",
+        //   message: `Your order ${order._id} placed with Cash on Delivery`,
+        //   link: `/account/orders/${order._id}`,
+        // });
+
+        // await Notification.create({
+        //   user: order.seller,
+        //   role: "SELLER",
+        //   title: "New COD order",
+        //   message: `New COD order ${order._id} received`,
+        //   link: `/seller/orders/${order._id}`,
+        // });
+
+        global.io?.to(order.user.toString()).emit("notification");
+        global.io?.to(order.seller.toString()).emit("notification");
+
+      }
+
+      return res.json({
+        success: true,
+        message: "COD order placed",
+        orders,
+      });
+
+    } catch (err) {
+      console.error("COD ERROR:", err);
+      res.status(500).json({ message: "COD order failed" });
+    }
+  }
+
+
 }
 
 module.exports = new PaymentController();

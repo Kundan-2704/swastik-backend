@@ -63,4 +63,6 @@ router.post(
   PaymentController.requestPayout
 );
 
+router.post("/create-cod-order", authMiddleware, PaymentController.createCODOrder);
+
 module.exports = router;
