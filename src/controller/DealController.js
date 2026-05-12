@@ -1,5 +1,7 @@
 const DealService = require("../service/DealService");
+// const apicache = require("apicache");
 const apicache = require("apicache");
+const cache = apicache.middleware;
 
 class DealController {
   async getAllDeals(req, res) {
@@ -36,11 +38,13 @@ class DealController {
 
   async deleteDeals(req, res) {
     const { id } = req.params;
+    console.log("Deleting deal with ID:", id); // Debug log
     try {
       await DealService.deleteDeal(id);
-      apicache();
+      apicache.clear();
       return res.status(202).json({ message: "Deal deleted successfully" });
     } catch (error) {
+      console.error("Error deleting deal:", error); // Debug log
       return res.status(404).json({ error: error.message });
     }
   }
