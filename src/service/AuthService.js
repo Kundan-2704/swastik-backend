@@ -93,29 +93,85 @@ class AuthService {
 
   /* ================= SIGNIN ================= */
 
+  // async signin(req) {
+  //   const { email, otp } = req;
+
+  //   const user = await User.findOne({ email });
+  //   if (!user) {
+  //     throw new Error("User not found. Please signup first.");
+  //   }
+
+  //   const verificationCode = await VerificationCode.findOne({ email });
+  //   if (!verificationCode || verificationCode.otp !== otp) {
+  //     throw new Error("Invalid OTP");
+  //   }
+
+  //   return {
+  //     message: "Login success",
+  //     jwt: jwtProvider.createJwt({
+  //       id: user._id,
+  //       email: user.email,
+  //       role: user.role,
+  //     }),
+  //     role: user.role,
+  //   };
+  // }
+
   async signin(req) {
-    const { email, otp } = req;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw new Error("User not found. Please signup first.");
-    }
+  const { email, otp } = req;
 
-    const verificationCode = await VerificationCode.findOne({ email });
-    if (!verificationCode || verificationCode.otp !== otp) {
-      throw new Error("Invalid OTP");
-    }
+  const SIGNIN_PREFIX = "signin_";
 
-    return {
-      message: "Login success",
-      jwt: jwtProvider.createJwt({
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      }),
-      role: user.role,
-    };
+  const pureEmail = email.startsWith(SIGNIN_PREFIX)
+    ? email.replace(SIGNIN_PREFIX, "")
+    : email;
+
+  /* VERIFY OTP */
+  const verificationCode = await VerificationCode.findOne({
+    email: pureEmail,
+  });
+
+  if (!verificationCode || verificationCode.otp !== otp) {
+    throw new Error("Invalid OTP");
   }
+
+  /* FIND USER */
+  let user = await User.findOne({
+    email: pureEmail,
+  });
+
+  /* AUTO CREATE ACCOUNT */
+  if (!user) {
+
+    user = new User({
+      email: pureEmail,
+      fullName: pureEmail.split("@")[0],
+      role: "ROLE_CUSTOMER",
+    });
+
+    await user.save();
+
+    const cart = new Cart({
+      user: user._id,
+    });
+
+    await cart.save();
+  }
+
+  return {
+    message: "Login success",
+
+    jwt: jwtProvider.createJwt({
+      id: user._id,
+      email: user.email,
+      role: user.role,
+    }),
+
+    role: user.role,
+  };
+}
+
 }
 
 module.exports = new AuthService();

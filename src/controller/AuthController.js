@@ -124,12 +124,27 @@ async googleLogin(req, res) {
     const decoded = await admin.auth().verifyIdToken(idToken);
     const { email } = decoded;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res
-        .status(404)
-        .json({ message: "Account not found. Please signup first." });
-    }
+    // const user = await User.findOne({ email });
+    // if (!user) {
+    //   return res
+    //     .status(404)
+    //     .json({ message: "Account not found. Please signup first." });
+    // }
+
+    let user = await User.findOne({ email });
+
+if (!user) {
+
+  user = await User.create({
+    fullName: decoded.name || "Customer",
+    email,
+    role: UserRoles.CUSTOMER,
+    provider: "google",
+    googleUid: decoded.uid,
+    isVerified: true,
+  });
+
+}
 
     /* ================= ROLE SWITCH LOGIC 🔥 ================= */
 
