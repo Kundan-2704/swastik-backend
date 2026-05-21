@@ -96,7 +96,15 @@ class OrderService {
           : 0;
 
         // const shippingCharge = isFirstSeller ? 40 : 0;
-        const shippingCharge = cart.shippingCharge || 0;
+        // const shippingCharge = cart.shippingCharge || 0;
+
+        const SHIPPING_THRESHOLD = 1500;
+const SHIPPING_CHARGE = 99;
+
+const shippingCharge =
+  totalSellingPrice >= SHIPPING_THRESHOLD
+    ? 0
+    : SHIPPING_CHARGE;
 
 
         // const finalPayable =
