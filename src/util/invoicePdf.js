@@ -44,6 +44,8 @@ module.exports = async function generateInvoicePDF(order) {
   const invoiceNo = `INV-${new Date().getFullYear()}-${order._id.toString().slice(-6)}`;
   const filePath = path.join(invoiceDir, `${invoiceNo}.pdf`);
 
+  const invoiceDate = new Date(order.createdAt);
+
   const doc = new PDFDocument({ size: "A4", margin: 40 });
   doc.pipe(fs.createWriteStream(filePath));
 
@@ -147,9 +149,24 @@ module.exports = async function generateInvoicePDF(order) {
   doc.fontSize(9).font("Helvetica")
     .text(buyer.name, rightX)
     .text(buyer.address, { width: 240 })
-    .text(`${buyer.city}, ${buyer.state} - ${buyer.pinCode}`);
+    .text(`${buyer.city}, ${buyer.state} - ${buyer.pinCode}`)
+    .text(`Place of Supply: ${buyer.state}`);
 
   const buyerEndY = doc.y;
+
+  /* ================= INVOICE INFO ================= */
+
+doc.fontSize(9)
+  .font("Helvetica-Bold")
+  .fillColor(DARK)
+  .text(`Invoice No: ${invoiceNo}`, 400, startY);
+
+doc.font("Helvetica")
+  .text(
+    `Invoice Date: ${invoiceDate.toLocaleDateString("en-IN")}`,
+    400,
+    startY + 15
+  );
 
   doc.y = Math.max(sellerEndY, buyerEndY) + 28;
 
